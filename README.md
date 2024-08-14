@@ -1,0 +1,2 @@
+# DigiClass
+Academic project
