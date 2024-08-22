@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:testing_app/screens/admin/estudy_screen.dart';
 import 'package:testing_app/screens/admin/exam_screen.dart';
 import 'package:testing_app/screens/admin/expenses_income_screen.dart';
@@ -11,6 +12,7 @@ import 'package:testing_app/screens/admin/settings_screen.dart';
 import 'package:testing_app/screens/admin/setup_screen.dart';
 import 'package:testing_app/screens/admin/staff_user_screen.dart';
 import 'package:testing_app/screens/admin/student_screen.dart';
+
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -76,7 +78,7 @@ class SidePanel extends StatelessWidget {
               // Navigate to Dashboard or any screen
             },
           ),
-           ExpansionTile(
+          ExpansionTile(
             leading: Icon(Icons.settings),
             title: Text('Settings'),
             children: <Widget>[
@@ -86,199 +88,227 @@ class SidePanel extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option: 'profileSetting'),
+                    ),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.key_sharp),
                 title: Text('Change Password'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option: 'changePassword'),
+                    ),
+                  );
                   // Navigate to Profile Setting screen
                 },
               ),
               ListTile(
+                leading: Icon(FontAwesomeIcons.whatsapp),
                 title: Text('Auto WhatsApp Settings'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option: 'autoWhatsApp'),
+                    ),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.notifications_active_outlined),
                 title: Text('Auto Notification Settings'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option: 'autoNotification'),
+                    ),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.my_library_books_rounded),
                 title: Text('My Plan'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option: 'myPlan'),
+                    ),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.person_add_alt),
                 title: Text('My Referral'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(option:'myReferral'),
+                    ),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               // Add more settings options here
             ],
           ),
-           ExpansionTile(
+          ExpansionTile(
             leading: Icon(Icons.settings),
             title: Text('Setup'),
             children: <Widget>[
               ListTile(
+                leading: Icon(Icons.edit_calendar_rounded),
                 title: Text('Add Year'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'addYear')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.edit_calendar_rounded),
                 title: Text('Manage Year'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageYear')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.assignment_turned_in),
                 title: Text('Assign Standard'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'assignStandard')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.assignment_turned_in_sharp),
                 title: Text('Assign Subject'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'assignSubject')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
+                leading: Icon(Icons.group_add),
                 title: Text('Add Class/Batch'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'addClassBatch')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-            title: Text('Manage Class/Batch'),
-            onTap: () {
+                leading: Icon(Icons.group_add_outlined),
+                title: Text('Manage Class/Batch'),
+                onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Manage TimeTable'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageClassBatch')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.schedule_outlined),
+                title: Text('Manage TimeTable'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupScreen()), 
-                 );
-            },
-           ),
+                    context,
+                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageTimeTable')),
+                  );
+                },
+              ),
             ],
-            ),
+          ),
           ExpansionTile(
             leading: Icon(Icons.people),
             title: Text('Staff/User'),
             children: <Widget>[
               ListTile(
+                leading: Icon(Icons.person_add),
                 title: Text('Create Staff'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Staff_USer_Screen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'createStaff')),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-              title: Text('Manage Staff'),
-              onTap: () {
+                leading: Icon(Icons.people_outline_sharp),
+                title: Text('Manage Staff'),
+                onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Staff_USer_Screen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Manage Staff Rights'),
-            onTap: () {
-                Navigator.pop(context);
-                  Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Staff_USer_Screen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Staff Attendance'),
-            onTap: () {
+                    context,
+                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'manageStaff')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.how_to_reg),
+                title: Text('Manage Staff Rights'),
+                onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Staff_USer_Screen()), 
-                 );
-            },
-          ),
+                    context,
+                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'manageStaffRights')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.app_registration),
+                title: Text('Staff Attendance'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'staffAttendance')),
+                  );
+                },
+              ),
             ],
           ),
-         ExpansionTile(
+          ExpansionTile(
             leading: Icon(Icons.people),
             title: Text('Student'),
             children: <Widget>[
@@ -287,657 +317,671 @@ class SidePanel extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-            title: Text('Manage Student Inquiry'),
-            onTap: () {
-                Navigator.pop(context);
+                title: Text('Manage Student Inquiry'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Import Students'),
-            onTap: () {
-                Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Import Students'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Add Student Registration'),
-            onTap: () {
-                Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Add Student Registration'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Manage Student'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Manage Student'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Assign Class/Batch'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Assign Class/Batch'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Student Attendance'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Student Attendance'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Share Documents'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Share Documents'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),        
-          ListTile(
-            title: Text('Manage Shared Documents'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Manage Shared Documents'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Chat with Students'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Chat with Students'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Students Feedback'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Students Feedback'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('Student Rights'),
-            onTap: () {
-              Navigator.pop(context);
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Student Rights'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );
-            },
-          ),
-          ListTile(
-            title: Text('App. Access Rights'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StudentScreen()), 
-                 );// Navigate to App Access Rights screen
-            },
-          ),
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('App. Access Rights'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => StudentScreen()),
+                  );// Navigate to App Access Rights screen
+                },
+              ),
             ],
-         ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Fee'),
             children: <Widget>[
               ListTile(
+                leading: Icon(Icons.menu_book_sharp),
                 title: Text('Create Fee Structure'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeeScreen()), 
-          
-              );
-              
-            },
-          ),
-          ListTile(
-            title: Text('Manage Fee Structure'),
-            onTap: () {
-              Navigator.pop(context);
+                    MaterialPageRoute(builder: (context) => FeeScreen(option:'createFeeStructure')),
+
+                  );
+
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_note),
+                title: Text('Manage Fee Structure'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeeScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Fee Collection'),
-            onTap: () {
-              Navigator.pop(context);
+                    MaterialPageRoute(builder: (context) => FeeScreen(option: 'manageFeeStructure')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.book_online_sharp),
+                title: Text('Fee Collection'),
+                onTap: () {
+                  Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeeScreen()), 
-          
-              );
-            },
-          ),
+                    MaterialPageRoute(builder: (context) => FeeScreen(option:'feeCollection')),
+
+                  );
+                },
+              ),
             ],
-           ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Exam'),
             children: <Widget>[
               ListTile(
+                leading: Icon(Icons.post_add),
                 title: Text('Create Manual Exam'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
-          ListTile(
-            title: Text('Manage Manual Exam'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Create MCQ Exam'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Manage MCQ Exam'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Create Assignments'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Manage Assignments'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ExamScreen()), 
-          
-              );
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createManualExam')),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_note_sharp),
+                title: Text('Manage Manual Exam'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageManualExam')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.my_library_books_sharp),
+                title: Text('Create MCQ Exam'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createMCQExam')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_note),
+                title: Text('Manage MCQ Exam'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageMCQExam')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.menu_book_rounded),
+                title: Text('Create Assignments'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createAssignments')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Manage Assignments'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageAssignments')),
+
+                  );
+                },
+              ),
             ],
-            ),
-           ExpansionTile(
-            leading: Icon(Icons.school),
+          ),
+          ExpansionTile(
+            leading: Icon(Icons.school_outlined),
             title: Text('eStudy'),
             children: <Widget>[
               ListTile(
+                leading: Icon(Icons.menu_book_outlined),
                 title: Text('Create Study Material'),
-               onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EstudyScreen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
-          ListTile(
-            title: Text('Manage Study Material'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EstudyScreen()), 
-          
-              );
-              
-            },
-          ),
-          ListTile(
-            title: Text('Manage Shared Study Material'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EstudyScreen()), 
-          
-              );
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'createStudyMaterial')),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.mode_edit_sharp),
+                title: Text('Manage Study Material'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'manageStudyMaterial')),
+
+                  );
+
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_note_sharp),
+                title: Text('Manage Shared Study Material'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'manageSharedStudyMaterial')),
+
+                  );
+                },
+              ),
             ],
-           ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Messaging'),
             children: <Widget>[
               ListTile(
                 title: Text('Send Message for Inquiry'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-             
-            },
-          ),ListTile(
-            title: Text('Send message to Student'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send message to Staff'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Staff Id/Password'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Student Id/Password'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Upcoming Exam Reminder'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Exam Marks Message'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Fee Status Message'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Fee Reminder'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Send Absent Student Attendance Message'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessagingScreen()), 
-          
-              );
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+
+                },
+              ),ListTile(
+                title: Text('Send message to Student'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send message to Staff'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Staff Id/Password'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Student Id/Password'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Upcoming Exam Reminder'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Exam Marks Message'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Fee Status Message'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Fee Reminder'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Send Absent Student Attendance Message'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+
+                  );
+                },
+              ),
             ],
-            ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Expense & Income'),
             children:<Widget>[
               ListTile(
                 title: Text('Add Expense'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
-          ListTile(
-            title: Text('Manage Expense'),
-            onTap: () {
-             Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Add Expense Type'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Manage Expense Type'),
-            onTap: () {
-             Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Add Income'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Manage Income'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Expenses_Income_Screen()), 
-          
-              );
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                title: Text('Manage Expense'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Add Expense Type'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Manage Expense Type'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Add Income'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Manage Income'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Expenses_Income_Screen()),
+
+                  );
+                },
+              ),
             ],
-           ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Report'),
             children:<Widget>[
               ListTile(
                 title: Text('Student Inquiry Report'),
-              onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
-          ListTile(
-            title: Text('Student Detail Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Student Card Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Student Attendance Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Pending Fee Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Fee Status Report'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Fee Collection'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Expense Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Income Report'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Profit/Loss Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Student Inquiry Analysis Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('Fee Analysis Report'),
-            onTap: () {
-               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
-          ListTile(
-            title: Text('App Access Rights'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReportScreen()), 
-          
-              );
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                title: Text('Student Detail Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Student Card Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Student Attendance Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Pending Fee Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Fee Status Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Fee Collection'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Expense Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Income Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Profit/Loss Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Student Inquiry Analysis Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('Fee Analysis Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
+              ListTile(
+                title: Text('App Access Rights'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ReportScreen()),
+
+                  );
+                },
+              ),
             ],
-           ),
-           ExpansionTile(
+          ),
+          ExpansionTile(
             leading: Icon(Icons.school),
             title: Text('Help'),
             children:<Widget>[
               ListTile(
+                leading: Icon(Icons.connect_without_contact),
                 title: Text('Conatct US'),
-              onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HelpScreen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
-          ListTile(
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpScreen(option: 'contactUs')),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.book),
                 title: Text('Feedback'),
-              onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HelpScreen()), 
-          
-              );
-              // Navigate to Student management
-            },
-          ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpScreen(option: 'feedback')),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
             ],
-            ),
+          ),
           // Add more ListTiles for other menu items as per your design
         ],
       ),
