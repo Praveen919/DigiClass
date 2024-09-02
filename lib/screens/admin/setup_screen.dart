@@ -414,12 +414,181 @@ class _AssignStandardScreenState extends State<AssignStandardScreen> {
 }
 
 
-class AssignSubjectScreen extends StatelessWidget {
+class AssignSubjectScreen extends StatefulWidget {
+  @override
+  _AssignSubjectScreenState createState() => _AssignSubjectScreenState();
+}
+
+class _AssignSubjectScreenState extends State<AssignSubjectScreen> {
+  List<String> subjects = [
+    'English',
+    'Maths',
+    'Science',
+    'Social Science',
+    'Hindi',
+    'Marathi',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'OC',
+    'SP',
+    'Computer Science'
+  ];
+
+  List<String> assignedSubjects = ['Common'];
+  Map<String, bool> subjectSelections = {};
+  bool hasOtherRequirements = false;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var subject in subjects) {
+      subjectSelections[subject] = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Assign Subject Screen'));
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Assign Subject',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          _buildManageStandardSection(),
+          SizedBox(height: 20),
+          _buildAssignedStandardSection(),
+          SizedBox(height: 20),
+          _buildButtonsSection(),
+          SizedBox(height: 20),
+          _buildAdditionalRequirementsCheckbox(),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              // Handle assignment logic here
+            },
+            child: Text('Save Assignment'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManageStandardSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Manage Subject',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 10),
+        TextField(
+          decoration: InputDecoration(
+            labelText: 'Search by Subject Name',
+            suffixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        SizedBox(height: 10),
+        _buildStandardCheckboxList(),
+      ],
+    );
+  }
+
+  Widget _buildStandardCheckboxList() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Column(
+        children: subjects.map((subject) {
+          return CheckboxListTile(
+            title: Text(subject),
+            value: subjectSelections[subject],
+            onChanged: (bool? value) {
+              setState(() {
+                subjectSelections[subject] = value!;
+              });
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildAssignedStandardSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Assigned Subject :',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 10),
+        _buildAssignedStandardList(),
+      ],
+    );
+  }
+
+  Widget _buildAssignedStandardList() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Column(
+        children: assignedSubjects.map((assignedSubject) {
+          return CheckboxListTile(
+            title: Text(assignedSubject),
+            value: true,
+            onChanged: null,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildButtonsSection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            // Handle "Assign Standard" logic here
+          },
+          child: Text('Assign Subject'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            // Handle "Remove Standard" logic here
+          },
+          child: Text('Remove Subject'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdditionalRequirementsCheckbox() {
+    return CheckboxListTile(
+      title: Text('Do you have any other Subject requirements?'),
+      value: hasOtherRequirements,
+      onChanged: (bool? value) {
+        setState(() {
+          hasOtherRequirements = value!;
+        });
+      },
+    );
   }
 }
+
 
 class AddClassBatchScreen extends StatefulWidget {
   @override
@@ -630,23 +799,6 @@ class _ManageTimeTableScreenState extends State<ManageTimeTableScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Manage Time Table'),
-        leading: IconButton(
-          icon: Icon(Icons.home),
-          onPressed: () {
-            // Navigate to the home screen
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Navigate to the settings screen
-            },
-          ),
-        ],
-      ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
