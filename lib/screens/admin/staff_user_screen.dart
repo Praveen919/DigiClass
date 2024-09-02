@@ -2,11 +2,36 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-class StaffUserScreen extends StatelessWidget {
 
+class StaffUserScreen extends StatefulWidget {
   final String option;
 
   StaffUserScreen({this.option = 'createStaff'});
+
+  @override
+  _StaffUserScreenState createState() => _StaffUserScreenState();
+}
+
+class _StaffUserScreenState extends State<StaffUserScreen> {
+  List<Map<String, dynamic>> staffList = [];
+
+  void addStaff(Map<String, dynamic> staff) {
+    setState(() {
+      staffList.add(staff);
+    });
+  }
+
+  void editStaff(int index, Map<String, dynamic> staff) {
+    setState(() {
+      staffList[index] = staff;
+    });
+  }
+
+  void deleteStaff(int index) {
+    setState(() {
+      staffList.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,13 +44,17 @@ class StaffUserScreen extends StatelessWidget {
   }
 
   Widget _buildContent() {
-    switch (option) {
+    switch (widget.option) {
       case 'createStaff':
-        return CreateStaffScreen();
+        return CreateStaffScreen(onSave: addStaff);
       case 'manageStaff':
-        return ManageStaffScreen();
+        return ManageStaffScreen(
+          staffList: staffList,
+          onEdit: editStaff,
+          onDelete: deleteStaff,
+        );
       case 'manageStaffRights':
-        return ManageStaffRightsScreen();
+        return ManageStaffRightsScreen(staffList: staffList); // Pass the staff list here
       case 'staffAttendance':
         return StaffAttendanceScreen();
       default:
@@ -35,6 +64,10 @@ class StaffUserScreen extends StatelessWidget {
 }
 
 class CreateStaffScreen extends StatefulWidget {
+  final void Function(Map<String, dynamic>) onSave;
+
+  CreateStaffScreen({required this.onSave});
+
   @override
   _CreateStaffScreenState createState() => _CreateStaffScreenState();
 }
@@ -51,51 +84,39 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   XFile? _profilePicture;
   bool _isEditable = true;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Staff Setup'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              Text(
-                'Create New Staff',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              _buildTextField('First Name*', _firstNameController),
-              _buildTextField('Middle Name*', _middleNameController),
-              _buildTextField('Last Name*', _lastNameController),
-              _buildTextField('Gender*', _genderController, readOnly: true),
-              _buildTextField('Mobile No*', _mobileController),
-              _buildTextField('Email', _emailController),
-              _buildTextField('Address', _addressController),
-              SizedBox(height: 20),
-              _buildProfilePicturePicker(),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: _resetForm,
-                    child: Text('Reset'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveForm,
-                    child: Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _resetForm() {
+    setState(() {
+      _isEditable = true;
+      _firstNameController.clear();
+      _middleNameController.clear();
+      _lastNameController.clear();
+      _genderController.clear();
+      _mobileController.clear();
+      _emailController.clear();
+      _addressController.clear();
+      _profilePicture = null;
+    });
+  }
+
+  void _saveForm() {
+    if (_formKey.currentState!.validate()) {
+      widget.onSave({
+        'firstName': _firstNameController.text,
+        'middleName': _middleNameController.text,
+        'lastName': _lastNameController.text,
+        'gender': _genderController.text,
+        'mobile': _mobileController.text,
+        'email': _emailController.text,
+        'address': _addressController.text,
+        'profilePicture': _profilePicture?.path, // Optionally save the image path
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Staff details saved successfully'),
+      ));
+
+      _resetForm();
+    }
   }
 
   Widget _buildTextField(String label, TextEditingController controller,
@@ -141,8 +162,7 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
 
   void _pickImage() async {
     final ImagePicker _picker = ImagePicker();
-    final XFile? image =
-    await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -151,45 +171,222 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
     }
   }
 
-  void _resetForm() {
-    setState(() {
-      _isEditable = true;
-      _firstNameController.clear();
-      _middleNameController.clear();
-      _lastNameController.clear();
-      _genderController.clear();
-      _mobileController.clear();
-      _emailController.clear();
-      _addressController.clear();
-      _profilePicture = null;
-    });
-  }
-
-  void _saveForm() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isEditable = false;
-      });
-      // Save form data
-      // Perform save operation here, like sending data to a server or saving it locally.
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Staff details saved successfully'),
-      ));
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              Text(
+                'Create New Staff',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              _buildTextField('First Name*', _firstNameController),
+              SizedBox(height: 16),
+              _buildTextField('Middle Name*', _middleNameController),
+              SizedBox(height: 16),
+              _buildTextField('Last Name*', _lastNameController),
+              SizedBox(height: 16),
+              _buildTextField('Gender*', _genderController),
+              SizedBox(height: 16),
+              _buildTextField('Mobile No*', _mobileController),
+              SizedBox(height: 16),
+              _buildTextField('Email', _emailController),
+              SizedBox(height: 16),
+              _buildTextField('Address', _addressController),
+              SizedBox(height: 20),
+              _buildProfilePicturePicker(),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: _resetForm,
+                    child: Text('Reset'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _saveForm,
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
 class ManageStaffScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> staffList;
+  final Function(int, Map<String, dynamic>) onEdit;
+  final Function(int) onDelete;
+
+  ManageStaffScreen(
+      {required this.staffList, required this.onEdit, required this.onDelete});
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Manage Staff Screen'));
+    if (staffList.isEmpty) {
+      return Center(
+        child: Text('No staff available.'),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: staffList.length,
+      itemBuilder: (context, index) {
+        final staff = staffList[index];
+        return ListTile(
+          leading: staff['profilePicture'] != null
+              ? CircleAvatar(
+            backgroundImage: FileImage(File(staff['profilePicture'])),
+          )
+              : CircleAvatar(child: Icon(Icons.person)),
+          title: Text('${staff['firstName']} ${staff['lastName']}'),
+          subtitle: Text(staff['mobile'] ?? ''),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () {
+                  _navigateToEditScreen(context, index, staff);
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () => onDelete(index),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToEditScreen(BuildContext context, int index, Map<String, dynamic> staff) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateStaffScreen(
+          onSave: (updatedStaff) {
+            onEdit(index, updatedStaff);
+            Navigator.pop(context); // Return to the previous screen after saving
+          },
+        ),
+      ),
+    );
   }
 }
 
-class ManageStaffRightsScreen extends StatelessWidget {
+class ManageStaffRightsScreen extends StatefulWidget {
+  final List<Map<String, dynamic>> staffList;
+
+  ManageStaffRightsScreen({required this.staffList});
+
+  @override
+  _ManageStaffRightsScreenState createState() => _ManageStaffRightsScreenState();
+}
+
+class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
+  String? _selectedStaff;
+  String? _selectedRight;
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Manage Staff Rights Screen'));
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Assign Staff Action Rights',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Staff Name*',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedStaff,
+              items: widget.staffList.map((staff) {
+                return DropdownMenuItem<String>(
+                  value: '${staff['firstName']} ${staff['middleName']} ${staff['lastName']}',
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person),
+                    ),
+                    title: Text(
+                        '${staff['firstName']} ${staff['middleName']} ${staff['lastName']}'),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStaff = value;
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select a staff member';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Grant Rights:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            _buildRightsRadioButton('Grant Admin Rights'),
+            _buildRightsRadioButton('Grant Teacher Rights'),
+            _buildRightsRadioButton('Grant Student Rights'),
+            SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: _grantRights,
+                child: Text('Grant Rights'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRightsRadioButton(String title) {
+    return RadioListTile<String>(
+      title: Text(title),
+      value: title,
+      groupValue: _selectedRight,
+      onChanged: (value) {
+        setState(() {
+          _selectedRight = value;
+        });
+      },
+    );
+  }
+
+  void _grantRights() {
+    if (_selectedStaff != null && _selectedRight != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('$_selectedRight granted to $_selectedStaff'),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Please select both staff and rights'),
+      ));
+    }
   }
 }
 
