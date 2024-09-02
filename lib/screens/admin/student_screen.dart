@@ -1,95 +1,149 @@
 import 'package:flutter/material.dart';
 
-class StudentScreen extends StatelessWidget {
-  const StudentScreen({super.key});
+class StudentScreen extends StatefulWidget {
+  final String option;
+
+  StudentScreen({required this.option});
+
+  @override
+  _StudentScreenState createState() => _StudentScreenState();
+}
+
+class _StudentScreenState extends State<StudentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Student'),
       ),
-      body: ListView(
-        children: [
-          ListTile(
-            title: Text('Add Student Inquiry'),
-            onTap: () {
-              // Navigate to Add Student Inquiry screen
-            },
-          ),
-          ListTile(
-            title: Text('Manage Student Inquiry'),
-            onTap: () {
-              // Navigate to Manage Student Inquiry screen
-            },
-          ),
-          ListTile(
-            title: Text('Import Students'),
-            onTap: () {
-              // Navigate to Import students screen
-            },
-          ),
-          ListTile(
-            title: Text('Add Student Registration'),
-            onTap: () {
-              // Navigate to Add Student Registration screen
-            },
-          ),
-          ListTile(
-            title: Text('Manage Student'),
-            onTap: () {
-              // Navigate to Manage Student screen
-            },
-          ),
-          ListTile(
-            title: Text('Assign Class/Batch'),
-            onTap: () {
-              // Navigate to Assign Class/Batch screen
-            },
-          ),
-          ListTile(
-            title: Text('Student Attendance'),
-            onTap: () {
-              // Navigate to Student Attendance screen
-            },
-          ),
-          ListTile(
-            title: Text('Share Documents'),
-            onTap: () {
-              // Navigate to Share DOcuments screen
-            },
-          ),        
-          ListTile(
-            title: Text('Manage Shared Documents'),
-            onTap: () {
-              // Navigate to Manage Shared Documents screen
-            },
-          ),
-          ListTile(
-            title: Text('Chat with Students'),
-            onTap: () {
-              // Navigate to Chat with Students screen
-            },
-          ),
-          ListTile(
-            title: Text('Students Feedback'),
-            onTap: () {
-              // Navigate to Students Feedback screen
-            },
-          ),
-          ListTile(
-            title: Text('Student Rights'),
-            onTap: () {
-              // Navigate to Student Rights screen
-            },
-          ),
-          ListTile(
-            title: Text('App. Access Rights'),
-            onTap: () {
-              // Navigate to App Access Rights screen
-            },
-          ),
-        ],
-      ),
+      body: _buildContent(),
     );
+  }
+
+  Widget _buildContent() {
+    switch (widget.option) {
+      case 'addInquiry':
+        return AddStudentInquiryScreen();
+      case 'manageInquiry':
+        return ManageStudentInquiryScreen();
+      case 'importStudents':
+        return ImportStudentsScreen();
+      case 'addRegistration':
+        return AddStudentRegistrationScreen();
+      case 'manageStudent':
+        return ManageStudentScreen();
+      case 'assignClassBatch':
+        return AssignClassBatchScreen();
+      case 'studentAttendance':
+        return StudentAttendanceScreen();
+      case 'shareDocuments':
+        return ShareDocumentsScreen();
+      case 'manageSharedDocuments':
+        return ManageSharedDocumentsScreen();
+      case 'chatWithStudents':
+        return ChatWithStudentsScreen();
+      case 'studentsFeedback':
+        return StudentsFeedbackScreen();
+      case 'studentRights':
+        return StudentRightsScreen();
+      case 'appAccessRights':
+        return AppAccessRightsScreen();
+      default:
+        return Center(child: Text('Unknown Option'));
+    }
+  }
+}
+
+// Below are the placeholder widgets for each student-related screen.
+// Replace these with your actual implementation.
+
+class AddStudentInquiryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Add Student Inquiry Screen'));
+  }
+}
+
+class ManageStudentInquiryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Manage Student Inquiry Screen'));
+  }
+}
+
+class ImportStudentsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Import Students Screen'));
+  }
+}
+
+class AddStudentRegistrationScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Add Student Registration Screen'));
+  }
+}
+
+class ManageStudentScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Manage Student Screen'));
+  }
+}
+
+class AssignClassBatchScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Assign Class/Batch Screen'));
+  }
+}
+
+class StudentAttendanceScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Student Attendance Screen'));
+  }
+}
+
+class ShareDocumentsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Share Documents Screen'));
+  }
+}
+
+class ManageSharedDocumentsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Manage Shared Documents Screen'));
+  }
+}
+
+class ChatWithStudentsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Chat with Students Screen'));
+  }
+}
+
+class StudentsFeedbackScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Students Feedback Screen'));
+  }
+}
+
+class StudentRightsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Student Rights Screen'));
+  }
+}
+
+class AppAccessRightsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('App. Access Rights Screen'));
   }
 }
