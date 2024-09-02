@@ -186,13 +186,141 @@ class _CreateStudyMaterialScreenState extends State<CreateStudyMaterialScreen> {
 class ManageStudyMaterialScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Manage Study Material Screen'));
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Manage Study Material'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              // Handle settings action
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: Icon(Icons.search),
+
+              ),
+            ),
+            SizedBox(height: 16.0),
+            Expanded(
+              child: ListView.builder(
+                itemCount: 1, // Replace with actual study material data
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('Course Name: XXXXXX'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Standard: XX'),
+                        Text('Subject: XXXXXX'),
+                        Text('Order No.: XXXXXX'),
+                      ],
+                    ),
+                    trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                    IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () {
+                      // Handle edit action
+                    },
+                  ),
+                  IconButton(
+                  icon: Icon(Icons.delete),
+
+                  onPressed: () {
+                  // Handle delete action
+                  },
+                  ),
+                  ],
+                  ),
+                  );
+                  },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
 class ManageSharedStudyMaterialScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Manage Shared Study Material Screen'));
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Manage Shared Study Material'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              // Handle settings action
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: Icon(Icons.search),
+
+              ),
+            ),
+            SizedBox(height: 16.0),
+            Expanded(
+              child: ListView.builder(
+                itemCount: 1, // Replace with actual study material data
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('Course Name: XXXXXX'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Standard: XX'),
+                        Text('Subject: XXXXXX'),
+                        Text('Order No.: XXXXXX'),
+                      ],
+                    ),
+                    trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                    IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () {
+                      // Handle edit action
+                    },
+                  ),
+                  IconButton(
+                  icon: Icon(Icons.delete),
+
+                  onPressed: () {
+                  // Handle delete action
+                  },
+                  ),
+                  ],
+                  ),
+                  );
+                  },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
