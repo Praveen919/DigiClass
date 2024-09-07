@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cors()); // Allow cross-origin requests from Flutter
 
 // MongoDB connection using Mongoose
-const uri = 'mongodb+srv://praveennaidu297:$APLSP2utmKd$7.@cluster0.qddnp.mongodb.net/DigiClass?retryWrites=true&w=majority';
+const uri = 'mongodb+srv://praveennaidu297:db-pass.@cluster0.qddnp.mongodb.net/DigiClass?retryWrites=true&w=majority';
 mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true
