@@ -1,15 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'forgot_password_screen.dart';
 
-
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  void _signIn(BuildContext context) {
-    // Add your sign-in logic here
-    print('Sign In button pressed');
-    // Navigate to the Branch-Year Selection screen after signing in
-    Navigator.pushNamed(context, '/branchYearSelection');
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _signIn(BuildContext context) async {
+    final String email = _emailController.text;
+    final String password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter email and password.')),
+      );
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse('http://192.168.0.103:3000/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,  // Ensure this field matches your backend's expected field
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      Navigator.pushNamed(context, '/branchYearSelection');
+    } else if (response.statusCode == 401) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid credentials.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error logging in. Please try again later.')),
+      );
+    }
   }
 
   void _createAccount(BuildContext context) {
@@ -20,17 +55,17 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true, // Ensure layout adjusts for keyboard
+      resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Ensure the column takes up minimal space
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1), // Add space at the top
-                Image.asset('assets/logo.png', height: 100), // Replace with your logo
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                Image.asset('assets/logo.png', height: 100),
                 const SizedBox(height: 10),
                 const Text(
                   'DIGICLASS.IN',
@@ -49,14 +84,16 @@ class LoginScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 50),
-                const TextField(
+                TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'User name',
+                    labelText: 'Email',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const TextField(
+                TextField(
+                  controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(),
@@ -67,7 +104,7 @@ class LoginScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () => _signIn(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green, // Background color
+                    backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 15.0),
                   ),
                   child: const Text(
@@ -105,7 +142,7 @@ class LoginScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () => _createAccount(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Background color
+                    backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                   ),
                   child: const Text(
@@ -116,7 +153,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1), // Add space at the bottom
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               ],
             ),
           ),
