@@ -1,12 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class CreateAccountScreen extends StatelessWidget {
+
+class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
 
-  void _createAccount(BuildContext context) {
-    // Handle account creation logic here
-    print('Create Account button pressed');
-    // Navigate to another screen or show a success message
+  @override
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
+}
+
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  bool _isChecked = false;
+
+  // Add controllers for form fields
+  final TextEditingController _instituteNameController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Function to send data to the server
+  Future<void> _createAccount(BuildContext context) async {
+    // Gather form data
+    String instituteName = _instituteNameController.text;
+    String country = _countryController.text;
+    String city = _cityController.text;
+    String name = _nameController.text;
+    String mobile = _mobileController.text;
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    // Basic validation (add more if needed)
+    if (instituteName.isEmpty || country.isEmpty || city.isEmpty || name.isEmpty || mobile.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields.')),
+      );
+      return;
+    }
+
+    // Validate email format
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email address.')),
+      );
+      return;
+    }
+
+    // Validate mobile number format
+    final mobileRegex = RegExp(r'^\d{10}$');
+    if (!mobileRegex.hasMatch(mobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid mobile number (10 digits).')),
+      );
+      return;
+    }
+
+    // Define API URL (replace with your actual server URL)
+    const String url = 'http://192.168.0.103:3000/register';
+
+
+    // Send POST request to the server
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'instituteName': instituteName,
+          'country': country,
+          'city': city,
+          'name': name,
+          'mobile': mobile,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // Account creation successful
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully!')),
+        );
+        Navigator.pop(context); // Navigate back to login screen
+      } else {
+        // Account creation failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create account: ${response.body}')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
+    }
   }
 
   @override
@@ -43,22 +132,25 @@ class CreateAccountScreen extends StatelessWidget {
               'Institute Detail',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _instituteNameController,
+              decoration: const InputDecoration(
                 labelText: 'Tuition / Coaching Center Name*',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _countryController,
+              decoration: const InputDecoration(
                 labelText: 'Country*',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _cityController,
+              decoration: const InputDecoration(
                 labelText: 'City*',
                 border: OutlineInputBorder(),
               ),
@@ -68,30 +160,51 @@ class CreateAccountScreen extends StatelessWidget {
               'Personal Details',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
                 labelText: 'Name*',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _mobileController,
+              decoration: const InputDecoration(
                 labelText: '+91 Mobile No.*',
                 border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
                 labelText: 'Email Id*',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password*',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                Checkbox(value: false, onChanged: (bool? value) {}),
+                Checkbox(
+                  value: _isChecked,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _isChecked = value ?? false;
+                    });
+                  },
+                ),
                 const Text('Agree to the '),
                 TextButton(
                   onPressed: () {
@@ -106,9 +219,18 @@ class CreateAccountScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _createAccount(context),
+              onPressed: () {
+                if (_isChecked) {
+                  _createAccount(context);
+                } else {
+                  // Show a message to agree to terms and conditions
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please agree to the terms and conditions.')),
+                  );
+                }
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Background color
+                backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
               child: const Text(
@@ -134,7 +256,7 @@ class CreateAccountScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Background color
+                backgroundColor: Colors.blue,
                 padding: const EdgeInsets.symmetric(vertical: 15.0),
               ),
               child: const Text(
