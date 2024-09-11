@@ -95,6 +95,18 @@ class _LogBookScreenState extends State<LogBookScreen> {
               ],
             ),
             const SizedBox(height: 16.0),
+            const Row(
+              children: [
+                SizedBox(width: 26),
+                Text("Date"),
+                SizedBox(width: 47),
+                Text("Timing"),
+                SizedBox(width: 34),
+                Text("Subject"),
+                SizedBox(width: 36),
+                Text("Topic")
+              ],
+            ),
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
