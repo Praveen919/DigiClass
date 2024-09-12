@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
 
@@ -22,6 +21,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // Role dropdown options
+  String _selectedRole = 'Admin'; // Default role
+  final List<String> _roles = ['Admin', 'Teacher', 'Student'];
+
   // Function to send data to the server
   Future<void> _createAccount(BuildContext context) async {
     // Gather form data
@@ -32,6 +35,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     String mobile = _mobileController.text;
     String email = _emailController.text;
     String password = _passwordController.text;
+    String role = _selectedRole;
 
     // Basic validation (add more if needed)
     if (instituteName.isEmpty || country.isEmpty || city.isEmpty || name.isEmpty || mobile.isEmpty || email.isEmpty || password.isEmpty) {
@@ -62,7 +66,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     // Define API URL (replace with your actual server URL)
     const String url = 'http://192.168.0.103:3000/register';
 
-
     // Send POST request to the server
     try {
       final response = await http.post(
@@ -76,6 +79,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           'mobile': mobile,
           'email': email,
           'password': password,
+          'role': role, // Include the role in the request
         }),
       );
 
@@ -193,6 +197,28 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 labelText: 'Password*',
                 border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Select Role*',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            DropdownButtonFormField<String>(
+              value: _selectedRole,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedRole = newValue!;
+                });
+              },
+              items: _roles.map<DropdownMenuItem<String>>((String role) {
+                return DropdownMenuItem<String>(
+                  value: role,
+                  child: Text(role),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 10),
             Row(
