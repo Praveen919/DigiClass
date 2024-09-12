@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:testing_app/screens/loginscreen.dart';
 import 'package:testing_app/screens/admin/estudy_screen.dart';
 import 'package:testing_app/screens/admin/exam_screen.dart';
 import 'package:testing_app/screens/admin/expenses_income_screen.dart';
@@ -15,50 +16,52 @@ import 'package:testing_app/screens/admin/student_screen.dart';
 
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final String name;
+  final String branch;
+  final String year;
+
+  const DashboardScreen({
+    super.key,
+    required this.name,
+    required this.branch,
+    required this.year,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Panel'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Dashboard'),
-              Tab(text: 'Tutorial'),
-            ],
-          ),
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();  // Open the drawer
-              },
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Panel'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();  // Open the drawer
+            },
           ),
         ),
-        drawer: SidePanel(),  // Adding the drawer here
-        body: const TabBarView(
-          children: [
-            DashboardTab(),
-            Center(child: Text('Tutorial Content')),
-          ],
-        ),
+      ),
+      drawer: const SidePanel(),  // Adding the drawer here
+      body: DashboardTab(
+        name: name,
+        branch: branch,
+        year: year,
       ),
     );
   }
 }
 
+
 class SidePanel extends StatelessWidget {
+  const SidePanel({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          DrawerHeader(
+          const DrawerHeader(
             decoration: BoxDecoration(
               color: Colors.green,
             ),
@@ -71,96 +74,96 @@ class SidePanel extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.dashboard),
-            title: Text('Dashboard'),
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
             onTap: () {
               Navigator.pop(context);  // Close the drawer
               // Navigate to Dashboard or any screen
             },
           ),
           ExpansionTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Profile Setting'),
+                leading: const Icon(Icons.person),
+                title: const Text('Profile Setting'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option: 'profileSetting'),
+                      builder: (context) => const SettingsScreen(option: 'profileSetting'),
                     ),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.key_sharp),
-                title: Text('Change Password'),
+                leading: const Icon(Icons.key_sharp),
+                title: const Text('Change Password'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option: 'changePassword'),
+                      builder: (context) => const SettingsScreen(option: 'changePassword'),
                     ),
                   );
                   // Navigate to Profile Setting screen
                 },
               ),
               ListTile(
-                leading: Icon(FontAwesomeIcons.whatsapp),
-                title: Text('Auto WhatsApp Settings'),
+                leading: const Icon(FontAwesomeIcons.whatsapp),
+                title: const Text('Auto WhatsApp Settings'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option: 'autoWhatsApp'),
+                      builder: (context) => const SettingsScreen(option: 'autoWhatsApp'),
                     ),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.notifications_active_outlined),
-                title: Text('Auto Notification Settings'),
+                leading: const Icon(Icons.notifications_active_outlined),
+                title: const Text('Auto Notification Settings'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option: 'autoNotification'),
+                      builder: (context) => const SettingsScreen(option: 'autoNotification'),
                     ),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.my_library_books_rounded),
-                title: Text('My Plan'),
+                leading: const Icon(Icons.my_library_books_rounded),
+                title: const Text('My Plan'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option: 'myPlan'),
+                      builder: (context) => const SettingsScreen(option: 'myPlan'),
                     ),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.person_add_alt),
-                title: Text('My Referral'),
+                leading: const Icon(Icons.person_add_alt),
+                title: const Text('My Referral'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SettingsScreen(option:'myReferral'),
+                      builder: (context) => const SettingsScreen(option:'myReferral'),
                     ),
                   );
                   // Navigate to Change Password screen
@@ -170,331 +173,319 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.settings),
-            title: Text('Setup'),
+            leading: const Icon(Icons.settings),
+            title: const Text('Setup'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.edit_calendar_rounded),
-                title: Text('Add Year'),
+                leading: const Icon(Icons.edit_calendar_rounded),
+                title: const Text('Add Year'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'addYear')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'addYear')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_calendar_rounded),
-                title: Text('Manage Year'),
+                leading: const Icon(Icons.edit_calendar_rounded),
+                title: const Text('Manage Year'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageYear')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'manageYear')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.assignment_turned_in),
-                title: Text('Assign Standard'),
+                leading: const Icon(Icons.assignment_turned_in),
+                title: const Text('Assign Standard'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'assignStandard')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'assignStandard')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.assignment_turned_in_sharp),
-                title: Text('Assign Subject'),
+                leading: const Icon(Icons.assignment_turned_in_sharp),
+                title: const Text('Assign Subject'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'assignSubject')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'assignSubject')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.group_add),
-                title: Text('Add Class/Batch'),
+                leading: const Icon(Icons.group_add),
+                title: const Text('Add Class/Batch'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'addClassBatch')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'addClassBatch')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.group_add_outlined),
-                title: Text('Manage Class/Batch'),
+                leading: const Icon(Icons.group_add_outlined),
+                title: const Text('Manage Class/Batch'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageClassBatch')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'manageClassBatch')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.schedule_outlined),
-                title: Text('Manage TimeTable'),
+                leading: const Icon(Icons.schedule_outlined),
+                title: const Text('Manage TimeTable'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SetupScreen(option: 'manageTimeTable')),
+                    MaterialPageRoute(builder: (context) => const SetupScreen(option: 'manageTimeTable')),
                   );
                 },
               ),
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.people),
-            title: Text('Staff/User'),
+            leading: const Icon(Icons.people),
+            title: const Text('Staff/User'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.person_add),
-                title: Text('Create Staff'),
+                leading: const Icon(Icons.person_add),
+                title: const Text('Create Staff'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'createStaff')),
+                    MaterialPageRoute(builder: (context) => const StaffUserScreen(option: 'createStaff')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.people_outline_sharp),
-                title: Text('Manage Staff'),
+                leading: const Icon(Icons.people_outline_sharp),
+                title: const Text('Manage Staff'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'manageStaff')),
+                    MaterialPageRoute(builder: (context) => const StaffUserScreen(option: 'manageStaff')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.how_to_reg),
-                title: Text('Manage Staff Rights'),
+                leading: const Icon(Icons.how_to_reg),
+                title: const Text('Manage Staff Rights'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'manageStaffRights')),
+                    MaterialPageRoute(builder: (context) => const StaffUserScreen(option: 'manageStaffRights')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.app_registration),
-                title: Text('Staff Attendance'),
+                leading: const Icon(Icons.app_registration),
+                title: const Text('Staff Attendance'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StaffUserScreen(option: 'staffAttendance')),
+                    MaterialPageRoute(builder: (context) => const StaffUserScreen(option: 'staffAttendance')),
                   );
                 },
               ),
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.people),
-            title: Text('Student'),
+            leading: const Icon(Icons.people),
+            title: const Text('Student'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.add_alert),
-                title: Text('Add Student Inquiry'),
+                leading: const Icon(Icons.add_alert),
+                title: const Text('Add Student Inquiry'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'addInquiry')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'addInquiry')),
                   );
                   // Navigate to Change Password screen
                 },
               ),
               ListTile(
-                leading: Icon(Icons.border_color_outlined),
-                title: Text('Manage Student Inquiry'),
+                leading: const Icon(Icons.border_color_outlined),
+                title: const Text('Manage Student Inquiry'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'manageInquiry')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'manageInquiry')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.add_circle_outline_sharp),
-                title: Text('Import Students'),
+                leading: const Icon(Icons.add_circle_outline_sharp),
+                title: const Text('Import Students'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'importStudents')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'importStudents')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.person_add_alt),
-                title: Text('Add Student Registration'),
+                leading: const Icon(Icons.person_add_alt),
+                title: const Text('Add Student Registration'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'addRegistration')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'addRegistration')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.manage_accounts),
-                title: Text('Manage Student '),
+                leading: const Icon(Icons.manage_accounts),
+                title: const Text('Manage Student '),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'manageStudent')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'manageStudent')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.assignment_turned_in_outlined),
-                title: Text('Assign Class/Batch'),
+                leading: const Icon(Icons.assignment_turned_in_outlined),
+                title: const Text('Assign Class/Batch'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'assignClassBatch')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'assignClassBatch')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.app_registration_sharp),
-                title: Text('Student Attendance'),
+                leading: const Icon(Icons.app_registration_sharp),
+                title: const Text('Student Attendance'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'studentAttendance')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'studentAttendance')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.add_box_outlined),
-                title: Text('Share Documents'),
+                leading: const Icon(Icons.add_box_outlined),
+                title: const Text('Share Documents'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'shareDocuments')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'shareDocuments')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text('Manage Shared Documents'),
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manage Shared Documents'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'manageSharedDocuments')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'manageSharedDocuments')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.message_outlined),
-                title: Text('Chat with Students'),
+                leading: const Icon(Icons.message_outlined),
+                title: const Text('Chat with Students'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'chatWithStudents')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'chatWithStudents')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.feedback_outlined),
-                title: Text('Students Feedback'),
+                leading: const Icon(Icons.feedback_outlined),
+                title: const Text('Students Feedback'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'studentsFeedback')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'studentsFeedback')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.key),
-                title: Text('Student Rights'),
+                leading: const Icon(Icons.key),
+                title: const Text('Student Rights'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'studentRights')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'studentRights')),
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.key_outlined),
-                title: Text('App. Access Rights'),
+                leading: const Icon(Icons.key_outlined),
+                title: const Text('App. Access Rights'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StudentScreen(option:'appAccessRights')),
+                    MaterialPageRoute(builder: (context) => const StudentScreen(option:'appAccessRights')),
                   );// Navigate to App Access Rights screen
                 },
               ),
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.attach_money_sharp),
-            title: Text('Fee'),
+            leading: const Icon(Icons.attach_money_sharp),
+            title: const Text('Fee'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Create Fee Structure'),
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Create Fee Structure'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeeScreen(option:'createFeeStructure')),
+                    MaterialPageRoute(builder: (context) => const FeeScreen(option:'createFeeStructure')),
 
                   );
 
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_note),
-                title: Text('Manage Fee Structure'),
+                leading: const Icon(Icons.edit_note),
+                title: const Text('Manage Fee Structure'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeeScreen(option: 'manageFeeStructure')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.book_online_sharp),
-                title: Text('Fee Collection'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => FeeScreen(option:'feeCollection')),
+                    MaterialPageRoute(builder: (context) => const FeeScreen(option: 'manageFeeStructure')),
 
                   );
                 },
@@ -502,78 +493,78 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.school),
-            title: Text('Exam'),
+            leading: const Icon(Icons.school),
+            title: const Text('Exam'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.post_add),
-                title: Text('Create Manual Exam'),
+                leading: const Icon(Icons.post_add),
+                title: const Text('Create Manual Exam'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createManualExam')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'createManualExam')),
 
                   );
                   // Navigate to Student management
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_note_sharp),
-                title: Text('Manage Manual Exam'),
+                leading: const Icon(Icons.edit_note_sharp),
+                title: const Text('Manage Manual Exam'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageManualExam')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'manageManualExam')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.my_library_books_sharp),
-                title: Text('Create MCQ Exam'),
+                leading: const Icon(Icons.my_library_books_sharp),
+                title: const Text('Create MCQ Exam'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createMCQExam')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'createMCQExam')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_note),
-                title: Text('Manage MCQ Exam'),
+                leading: const Icon(Icons.edit_note),
+                title: const Text('Manage MCQ Exam'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageMCQExam')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'manageMCQExam')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.menu_book_rounded),
-                title: Text('Create Assignments'),
+                leading: const Icon(Icons.menu_book_rounded),
+                title: const Text('Create Assignments'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'createAssignments')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'createAssignments')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('Manage Assignments'),
+                leading: const Icon(Icons.edit),
+                title: const Text('Manage Assignments'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ExamScreen(option: 'manageAssignments')),
+                    MaterialPageRoute(builder: (context) => const ExamScreen(option: 'manageAssignments')),
 
                   );
                 },
@@ -581,43 +572,43 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.school_outlined),
-            title: Text('eStudy'),
+            leading: const Icon(Icons.school_outlined),
+            title: const Text('eStudy'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.menu_book_outlined),
-                title: Text('Create Study Material'),
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('Create Study Material'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'createStudyMaterial')),
+                    MaterialPageRoute(builder: (context) => const EstudyScreen(option: 'createStudyMaterial')),
 
                   );
                   // Navigate to Student management
                 },
               ),
               ListTile(
-                leading: Icon(Icons.mode_edit_sharp),
-                title: Text('Manage Study Material'),
+                leading: const Icon(Icons.mode_edit_sharp),
+                title: const Text('Manage Study Material'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'manageStudyMaterial')),
+                    MaterialPageRoute(builder: (context) => const EstudyScreen(option: 'manageStudyMaterial')),
 
                   );
 
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_note_sharp),
-                title: Text('Manage Shared Study Material'),
+                leading: const Icon(Icons.edit_note_sharp),
+                title: const Text('Manage Shared Study Material'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => EstudyScreen(option: 'manageSharedStudyMaterial')),
+                    MaterialPageRoute(builder: (context) => const EstudyScreen(option: 'manageSharedStudyMaterial')),
 
                   );
                 },
@@ -625,204 +616,125 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.message_outlined),
-            title: Text('Messaging'),
+            leading: const Icon(Icons.message_outlined),
+            title: const Text('Messaging'),
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.add_alert),
-                title: Text('Send Message for Inquiry'),
+                leading: const Icon(Icons.add_alert),
+                title: const Text('Send Message for Inquiry'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'inquiry')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'inquiry')),
 
                   );
 
                 },
               ),ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Send message to Student'),
+                leading: const Icon(Icons.person),
+                title: const Text('Send message to Student'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'student')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'student')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.person_sharp),
-                title: Text('Send message to Staff'),
+                leading: const Icon(Icons.person_sharp),
+                title: const Text('Send message to Staff'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'staff')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'staff')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.password_outlined),
-                title: Text('Send Staff Id/Password'),
+                leading: const Icon(Icons.password_outlined),
+                title: const Text('Send Staff Id/Password'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'staffIdPassword')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'staffIdPassword')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.password),
-                title: Text('Send Student Id/Password'),
+                leading: const Icon(Icons.password),
+                title: const Text('Send Student Id/Password'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'studentIdPassword')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'studentIdPassword')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.remember_me),
-                title: Text('Send Upcoming Exam Reminder'),
+                leading: const Icon(Icons.remember_me),
+                title: const Text('Send Upcoming Exam Reminder'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'examReminder')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'examReminder')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.score_outlined),
-                title: Text('Send Exam Marks Message'),
+                leading: const Icon(Icons.score_outlined),
+                title: const Text('Send Exam Marks Message'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'examMarks')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'examMarks')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.query_stats),
-                title: Text('Send Fee Status Message'),
+                leading: const Icon(Icons.query_stats),
+                title: const Text('Send Fee Status Message'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'feeStatus')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'feeStatus')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.attach_money),
-                title: Text('Send Fee Reminder'),
+                leading: const Icon(Icons.attach_money),
+                title: const Text('Send Fee Reminder'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'feeReminder')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'feeReminder')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.person_remove_alt_1_outlined),
-                title: Text('Send Absent Student Attendance Message'),
+                leading: const Icon(Icons.person_remove_alt_1_outlined),
+                title: const Text('Send Absent Student Attendance Message'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessagingScreen(option: 'absentAttendance')),
-
-                  );
-                },
-              ),
-            ],
-          ),
-          ExpansionTile(
-            leading: Icon(Icons.attach_money),
-            title: Text('Expense & Income'),
-            children:<Widget>[
-              ListTile(
-                leading: Icon(Icons.attach_money),
-                title: Text('Add Expense'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'addExpense')),
-
-                  );
-                  // Navigate to Student management
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text('Manage Expense'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'manageExpense')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.add_box_outlined),
-                title: Text('Add Expense Type'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'addExpenseType')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text('Manage Expense Type'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'manageExpenseType')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.add_box_outlined),
-                title: Text('Add Income'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'addIncome')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text('Manage Income'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensesIncomeScreen(option: 'manageIncome')),
+                    MaterialPageRoute(builder: (context) => const MessagingScreen(option: 'absentAttendance')),
 
                   );
                 },
@@ -830,162 +742,78 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.file_open_outlined),
-            title: Text('Report'),
+            leading: const Icon(Icons.attach_money),
+            title: const Text('Expense & Income'),
             children:<Widget>[
               ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Student Inquiry Report'),
+                leading: const Icon(Icons.attach_money),
+                title: const Text('Add Expense'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'studentInquiry')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'addExpense')),
 
                   );
                   // Navigate to Student management
                 },
               ),
               ListTile(
-                leading: Icon(Icons.details_rounded),
-                title: Text('Student Detail Report'),
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manage Expense'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'studentDetail')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'manageExpense')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.grade),
-                title: Text('Student Card Report'),
+                leading: const Icon(Icons.add_box_outlined),
+                title: const Text('Add Expense Type'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'studentCard')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'addExpenseType')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit_calendar_outlined),
-                title: Text('Student Attendance Report'),
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manage Expense Type'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'studentAttendance')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'manageExpenseType')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.attach_money),
-                title: Text('Pending Fee Report'),
+                leading: const Icon(Icons.add_box_outlined),
+                title: const Text('Add Income'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'pendingFee')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'addIncome')),
 
                   );
                 },
               ),
               ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Fee Status Report'),
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manage Income'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'feeStatus')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Fee Collection'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'feeCollection')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Expense Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'expense')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Income Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'income')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Profit/Loss Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'profitLoss')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Student Inquiry Analysis Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'studentInquiryAnalysis')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book_sharp),
-                title: Text('Fee Analysis Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'feeAnalysis')),
-
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.check_circle_outlined),
-                title: Text('App Access Rights'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReportScreen(option:'appAccessRights')),
+                    MaterialPageRoute(builder: (context) => const ExpensesIncomeScreen(option: 'manageIncome')),
 
                   );
                 },
@@ -993,30 +821,158 @@ class SidePanel extends StatelessWidget {
             ],
           ),
           ExpansionTile(
-            leading: Icon(Icons.live_help_outlined),
-            title: Text('Help'),
+            leading: const Icon(Icons.file_open_outlined),
+            title: const Text('Report'),
             children:<Widget>[
               ListTile(
-                leading: Icon(Icons.connect_without_contact),
-                title: Text('Conatct US'),
+                leading: const Icon(Icons.person),
+                title: const Text('Student Inquiry Report'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HelpScreen(option: 'contactUs')),
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'studentInquiry')),
 
                   );
                   // Navigate to Student management
                 },
               ),
               ListTile(
-                leading: Icon(Icons.feedback),
-                title: Text('Feedback'),
+                leading: const Icon(Icons.details_rounded),
+                title: const Text('Student Detail Report'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HelpScreen(option: 'feedback')),
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'studentDetail')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.grade),
+                title: const Text('Student Card Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'studentCard')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_calendar_outlined),
+                title: const Text('Student Attendance Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'studentAttendance')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Fee Status Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'feeStatus')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Fee Collection'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'feeCollection')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Expense Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'expense')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Income Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'income')),
+
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_sharp),
+                title: const Text('Profit/Loss Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'profitLoss')),
+
+                  );
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.check_circle_outlined),
+                title: const Text('App Access Rights'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportScreen(option:'appAccessRights')),
+
+                  );
+                },
+              ),
+            ],
+          ),
+          ExpansionTile(
+            leading: const Icon(Icons.live_help_outlined),
+            title: const Text('Help'),
+            children:<Widget>[
+              ListTile(
+                leading: const Icon(Icons.connect_without_contact),
+                title: const Text('Conatct US'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HelpScreen(option: 'contactUs')),
+
+                  );
+                  // Navigate to Student management
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.feedback),
+                title: const Text('Feedback'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HelpScreen(option: 'feedback')),
 
                   );
                   // Navigate to Student management
@@ -1032,19 +988,32 @@ class SidePanel extends StatelessWidget {
 }
 
 class DashboardTab extends StatelessWidget {
-  const DashboardTab({super.key});
+  final String name;
+  final String branch;
+  final String year;
+
+  const DashboardTab({
+    super.key,
+    required this.name,
+    required this.branch,
+    required this.year,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         children: [
-          UserInfoCard(),
-          NotificationsCard(),
-          StatisticsCard(),
-          MonthlyFeeCollectionChart(),
-          FeeStatusCard(),
-          FinancialSummaryCard(),
+          UserInfoCard(
+            name: name,
+            branch: branch,
+            year: year,
+          ),
+          const NotificationsCard(),
+          const StatisticsCard(),
+          const MonthlyFeeCollectionChart(),
+          const FeeStatusCard(),
+          const FinancialSummaryCard(),
         ],
       ),
     );
@@ -1052,16 +1021,39 @@ class DashboardTab extends StatelessWidget {
 }
 
 class UserInfoCard extends StatelessWidget {
-  const UserInfoCard({super.key});
+  final String name;
+  final String branch;
+  final String year;
+
+  const UserInfoCard({
+    super.key,
+    required this.name,
+    required this.branch,
+    required this.year,
+  });
+
+  // Function to handle user logout and navigate to login screen
+  void _logout(BuildContext context) {
+    // Add any logout logic here, like clearing user data, tokens, etc.
+    // Then, navigate to the login screen
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: ListTile(
-        leading: CircleAvatar(child: Text('Logo')),
-        title: Text('User 1'),
-        subtitle: Text('Branch-1\n2024-2025'),
-        trailing: Icon(Icons.power_settings_new),
+        leading:
+        const CircleAvatar(child: Text('Logo')), // Adjust logo as necessary
+        title: Text(name), // Display the user's name
+        subtitle:
+        Text('Branch: $branch\nYear: $year'), // Display branch and year
+        trailing: IconButton(
+          icon: const Icon(Icons.power_settings_new),
+          onPressed: () =>
+              _logout(context), // Call the logout function when pressed
+        ),
       ),
     );
   }
@@ -1078,7 +1070,8 @@ class NotificationsCard extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.notifications),
             title: Text("Today's Notifications"),
-            trailing: CircleAvatar(backgroundColor: Colors.orange, child: Text('0')),
+            trailing:
+            CircleAvatar(backgroundColor: Colors.orange, child: Text('0')),
           ),
           ListTile(
             leading: Icon(Icons.calendar_today),
@@ -1106,17 +1099,20 @@ class StatisticsCard extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.question_answer),
             title: Text("Today's Inquiries"),
-            trailing: CircleAvatar(backgroundColor: Colors.green, child: Text('0')),
+            trailing:
+            CircleAvatar(backgroundColor: Colors.green, child: Text('0')),
           ),
           ListTile(
             leading: Icon(Icons.group),
             title: Text('Total Students'),
-            trailing: CircleAvatar(backgroundColor: Colors.blue, child: Text('1')),
+            trailing:
+            CircleAvatar(backgroundColor: Colors.blue, child: Text('1')),
           ),
           ListTile(
             leading: Icon(Icons.person_off),
             title: Text('Today Absentees'),
-            trailing: CircleAvatar(backgroundColor: Colors.cyan, child: Text('0')),
+            trailing:
+            CircleAvatar(backgroundColor: Colors.cyan, child: Text('0')),
           ),
         ],
       ),
@@ -1194,6 +1190,7 @@ class FinancialSummaryCard extends StatelessWidget {
     );
   }
 }
+
 /*https://www.figma.com/proto/QDv0ZOA5joCftuPL14imWv/Untitled?page-id=0%3A1&node-id=4-3&viewport=538%2C316%2C0.
 56&t=95oB0YAjJGF1CD8L-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=4%3A3&show-proto-sidebar=1
 */
