@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'forgot_password_screen.dart';
+import 'branch_year_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _signIn(BuildContext context) async {
     final String email = _emailController.text;
@@ -20,31 +29,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password.')),
+        const SnackBar(content: Text('Please enter both email and password.')),
       );
       return;
     }
 
-    final response = await http.post(
-      Uri.parse('http://192.168.0.103:3000/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,  // Ensure this field matches your backend's expected field
-        'password': password,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      Navigator.pushNamed(context, '/branchYearSelection');
-    } else if (response.statusCode == 401) {
+    if (!_isValidEmail(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials.')),
+        const SnackBar(content: Text('Please enter a valid email address.')),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error logging in. Please try again later.')),
-      );
+      return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.0.103:3000/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final Map<String, dynamic>? userData = data['userData'] as Map<String, dynamic>?;
+
+        if (userData != null) {
+          final String name = userData['name'] ?? 'Unknown';
+          final String branch = userData['branch'] ?? 'Unknown';
+          final String year = userData['year'] ?? 'Unknown';
+          final String userRole = userData['role'] ?? 'Unknown';
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BranchYearSelectionScreen(
+                name: name,
+                branch: branch,
+                year: year,
+                userRole: userRole,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not found.')),
+          );
+        }
+      } else if (response.statusCode == 401) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid credentials.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error logging in. Please try again.')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $error')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    return emailRegex.hasMatch(email);
   }
 
   void _createAccount(BuildContext context) {
@@ -65,8 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                Image.asset('assets/logo.png', height: 100),
-                const SizedBox(height: 10),
                 const Text(
                   'DIGICLASS.IN',
                   style: TextStyle(
@@ -86,7 +140,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 50),
                 TextField(
                   controller: _emailController,
-                  decoration: InputDecoration(
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(),
                   ),
@@ -94,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(),
                   ),
@@ -102,12 +157,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => _signIn(context),
+                  onPressed: _isLoading ? null : () => _signIn(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 15.0),
                   ),
-                  child: const Text(
+                  child: _isLoading
+                      ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  )
+                      : const Text(
                     'SIGN IN',
                     style: TextStyle(
                       fontSize: 18,
@@ -140,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () => _createAccount(context),
+                  onPressed: _isLoading ? null : () => _createAccount(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
