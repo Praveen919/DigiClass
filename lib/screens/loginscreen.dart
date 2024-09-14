@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'forgot_password_screen.dart';
 import 'branch_year_selection_screen.dart';
 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -47,10 +48,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.0.103:3000/login'),
+        Uri.parse('http://192.168.0.102/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -106,7 +110,19 @@ class _LoginScreenState extends State<LoginScreen> {
   void _createAccount(BuildContext context) {
     Navigator.pushNamed(context, '/createAccount');
   }
+  Future<void> _testConnection() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.0.102:3000/api/auth/login'));
+      if (response.statusCode == 200) {
+        print('Connection successful!');
+      } else {
+        print('Failed to connect. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error connecting: $error');
 
+}
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +137,8 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                Image.asset('assets/logo.png', height: 100),
+                const SizedBox(height: 10),
                 const Text(
                   'DIGICLASS.IN',
                   style: TextStyle(
