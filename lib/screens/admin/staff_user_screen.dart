@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:intl/intl.dart';
 
 class StaffUserScreen extends StatefulWidget {
   final String option;
 
-  StaffUserScreen({this.option = 'createStaff'});
+  const StaffUserScreen({super.key, this.option = 'createStaff'});
 
   @override
   _StaffUserScreenState createState() => _StaffUserScreenState();
@@ -37,7 +39,7 @@ class _StaffUserScreenState extends State<StaffUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Staff/User'),
+        title: const Text('Staff/User'),
       ),
       body: _buildContent(),
     );
@@ -56,17 +58,18 @@ class _StaffUserScreenState extends State<StaffUserScreen> {
       case 'manageStaffRights':
         return ManageStaffRightsScreen(staffList: staffList); // Pass the staff list here
       case 'staffAttendance':
-        return StaffAttendanceScreen();
+        return const StaffAttendanceScreen();
       default:
-        return Center(child: Text('Unknown Option'));
+        return const Center(child: Text('Unknown Option'));
     }
   }
 }
 
 class CreateStaffScreen extends StatefulWidget {
+  final Map<String, dynamic>? staff; // Optional parameter for editing staff
   final void Function(Map<String, dynamic>) onSave;
 
-  CreateStaffScreen({required this.onSave});
+  const CreateStaffScreen({Key? key, this.staff, required this.onSave}) : super(key: key);
 
   @override
   _CreateStaffScreenState createState() => _CreateStaffScreenState();
@@ -81,26 +84,48 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  final _passwordController = TextEditingController(); // Password controller
   XFile? _profilePicture;
   bool _isEditable = true;
 
-  void _resetForm() {
-    setState(() {
-      _isEditable = true;
-      _firstNameController.clear();
-      _middleNameController.clear();
-      _lastNameController.clear();
-      _genderController.clear();
-      _mobileController.clear();
-      _emailController.clear();
-      _addressController.clear();
-      _profilePicture = null;
-    });
+  @override
+  void initState() {
+    super.initState();
+    if (widget.staff != null) {
+      // Initialize controllers with staff data if available
+      final staff = widget.staff!;
+      _firstNameController.text = staff['firstName'] ?? '';
+      _middleNameController.text = staff['middleName'] ?? '';
+      _lastNameController.text = staff['lastName'] ?? '';
+      _genderController.text = staff['gender'] ?? '';
+      _mobileController.text = staff['mobile'] ?? '';
+      _emailController.text = staff['email'] ?? '';
+      _addressController.text = staff['address'] ?? '';
+      _profilePicture = staff['profilePicture'] != null ? XFile(staff['profilePicture']) : null;
+      _isEditable = false; // Set editable state based on staff data
+    }
   }
 
-  void _saveForm() {
+  void _resetForm() {
+    if (widget.staff == null) {
+      setState(() {
+        _isEditable = true;
+        _firstNameController.clear();
+        _middleNameController.clear();
+        _lastNameController.clear();
+        _genderController.clear();
+        _mobileController.clear();
+        _emailController.clear();
+        _addressController.clear();
+        _passwordController.clear(); // Clear password field
+        _profilePicture = null;
+      });
+    }
+  }
+
+  void _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      widget.onSave({
+      final staffData = {
         'firstName': _firstNameController.text,
         'middleName': _middleNameController.text,
         'lastName': _lastNameController.text,
@@ -108,25 +133,75 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
         'mobile': _mobileController.text,
         'email': _emailController.text,
         'address': _addressController.text,
-        'profilePicture': _profilePicture?.path, // Optionally save the image path
-      });
+        'profilePicture': _profilePicture?.path, // Save image path
+      };
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Staff details saved successfully'),
-      ));
+      final staffUrl = widget.staff == null
+          ? 'http://192.168.0.102:3000/api/staff' // URL for creating staff
+          : 'http://192.168.0.102:3000/api/staff/${widget.staff!['id']}'; // URL for updating staff
 
-      _resetForm();
+      final method = widget.staff == null ? 'POST' : 'PUT';
+
+      // Save to staff collection
+      final staffResponse = await http.post(
+        Uri.parse(staffUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(staffData),
+      );
+
+      // Save to users collection for login
+      if (widget.staff == null) {
+        final usersData = {
+          'email': _emailController.text,
+          'password': _passwordController.text,
+          'role': 'staff',  // Define role as staff
+        };
+
+        final usersUrl = 'http://192.168.0.102:3000/api/users/create'; // URL for creating users
+
+        final usersResponse = await http.post(
+          Uri.parse(usersUrl),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(usersData),
+        );
+
+        if (staffResponse.statusCode == 201 && usersResponse.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Staff details saved successfully')),
+          );
+          widget.onSave(staffData); // Notify parent widget with saved data
+          _resetForm();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to save staff details')),
+          );
+        }
+      } else {
+        if (staffResponse.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Staff details updated successfully')),
+          );
+          widget.onSave(staffData); // Notify parent widget with saved data
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to update staff details')),
+          );
+        }
+      }
     }
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {bool readOnly = false}) {
+  Widget _buildTextField(String label, TextEditingController controller, {bool readOnly = false}) {
     return TextFormField(
       controller: controller,
       readOnly: !_isEditable || readOnly,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -137,12 +212,30 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
     );
   }
 
+  Widget _buildPasswordField() {
+    if (widget.staff != null) return Container(); // Don't show password field for existing staff
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: true,
+      decoration: const InputDecoration(
+        labelText: 'Password',
+        border: OutlineInputBorder(),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Password is required';
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _buildProfilePicturePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Profile Picture:'),
-        SizedBox(height: 10),
+        const Text('Profile Picture:'),
+        const SizedBox(height: 10),
         GestureDetector(
           onTap: _isEditable ? _pickImage : null,
           child: Container(
@@ -152,7 +245,7 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
               border: Border.all(color: Colors.grey),
             ),
             child: _profilePicture == null
-                ? Center(child: Text('No image selected'))
+                ? const Center(child: Text('No image selected'))
                 : Image.file(File(_profilePicture!.path), fit: BoxFit.cover),
           ),
         ),
@@ -161,8 +254,8 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   }
 
   void _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
@@ -180,37 +273,34 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              Text(
-                'Create New Staff',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
               _buildTextField('First Name*', _firstNameController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Middle Name*', _middleNameController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Last Name*', _lastNameController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Gender*', _genderController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Mobile No*', _mobileController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Email', _emailController),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField('Address', _addressController),
-              SizedBox(height: 20),
+              const SizedBox(height: 16),
+              _buildPasswordField(), // Include password field for new staff
+              const SizedBox(height: 20),
               _buildProfilePicturePicker(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
                     onPressed: _resetForm,
-                    child: Text('Reset'),
+                    child: const Text('Reset'),
                   ),
                   ElevatedButton(
                     onPressed: _saveForm,
-                    child: Text('Save'),
+                    child: Text(widget.staff == null ? 'Create Staff' : 'Update Staff'),
                   ),
                 ],
               ),
@@ -222,64 +312,51 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   }
 }
 
+
 class ManageStaffScreen extends StatelessWidget {
   final List<Map<String, dynamic>> staffList;
   final Function(int, Map<String, dynamic>) onEdit;
   final Function(int) onDelete;
 
-  ManageStaffScreen(
-      {required this.staffList, required this.onEdit, required this.onDelete});
+  const ManageStaffScreen({
+    super.key,
+    required this.staffList,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (staffList.isEmpty) {
-      return Center(
-        child: Text('No staff available.'),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: staffList.length,
-      itemBuilder: (context, index) {
-        final staff = staffList[index];
-        return ListTile(
-          leading: staff['profilePicture'] != null
-              ? CircleAvatar(
-            backgroundImage: FileImage(File(staff['profilePicture'])),
-          )
-              : CircleAvatar(child: Icon(Icons.person)),
-          title: Text('${staff['firstName']} ${staff['lastName']}'),
-          subtitle: Text(staff['mobile'] ?? ''),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  _navigateToEditScreen(context, index, staff);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () => onDelete(index),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _navigateToEditScreen(BuildContext context, int index, Map<String, dynamic> staff) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateStaffScreen(
-          onSave: (updatedStaff) {
-            onEdit(index, updatedStaff);
-            Navigator.pop(context); // Return to the previous screen after saving
-          },
-        ),
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: staffList.length,
+        itemBuilder: (context, index) {
+          final staff = staffList[index];
+          return ListTile(
+            leading: staff['profilePicture'] != null
+                ? CircleAvatar(
+              backgroundImage: staff['profilePicture'].startsWith('http')
+                  ? NetworkImage(staff['profilePicture']) as ImageProvider
+                  : FileImage(File(staff['profilePicture'])),
+            )
+                : const CircleAvatar(child: Icon(Icons.person)),
+            title: Text('${staff['firstName']} ${staff['lastName']}'),
+            subtitle: Text(staff['email'] ?? 'No email'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => onEdit(index, staff),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => onDelete(index),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -288,7 +365,7 @@ class ManageStaffScreen extends StatelessWidget {
 class ManageStaffRightsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> staffList;
 
-  ManageStaffRightsScreen({required this.staffList});
+  const ManageStaffRightsScreen({Key? key, required this.staffList}) : super(key: key);
 
   @override
   _ManageStaffRightsScreenState createState() => _ManageStaffRightsScreenState();
@@ -319,7 +396,7 @@ class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
               value: _selectedStaff,
               items: widget.staffList.map((staff) {
                 return DropdownMenuItem<String>(
-                  value: '${staff['firstName']} ${staff['middleName']} ${staff['lastName']}',
+                  value: '${staff['id']}', // Use ID for unique identification
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.grey,
@@ -379,9 +456,22 @@ class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
 
   void _grantRights() {
     if (_selectedStaff != null && _selectedRight != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('$_selectedRight granted to $_selectedStaff'),
-      ));
+      // Extract the staff ID from the selected staff
+      final selectedStaffId = widget.staffList.firstWhere(
+              (staff) => '${staff['id']}' == _selectedStaff,
+          orElse: () => {}
+      )['id'];
+
+      if (selectedStaffId != null) {
+        // Here you can add the logic to save the granted rights to the backend/database
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$_selectedRight granted to ${widget.staffList.firstWhere((staff) => '${staff['id']}' == _selectedStaff)['firstName']}'),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error granting rights. Staff not found.'),
+        ));
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Please select both staff and rights'),
@@ -391,13 +481,27 @@ class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
 }
 
 class StaffAttendanceScreen extends StatefulWidget {
+  const StaffAttendanceScreen({super.key});
+
   @override
   _ManageStaffAttendanceScreenState createState() => _ManageStaffAttendanceScreenState();
 }
 
 class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
   DateTime? selectedDate;
+  DateTime? fromDate;
+  DateTime? toDate;
+  bool _attendanceTaken = false;
+  bool _isEditable = false;
 
+  // Dummy attendance data (to simulate actual attendance records)
+  List<Map<String, String>> attendanceData = [
+    {'srNo': '1', 'staffName': 'Staff 1', 'attendance': 'Present'},
+    {'srNo': '2', 'staffName': 'Staff 2', 'attendance': 'Absent'},
+    {'srNo': '3', 'staffName': 'Staff 3', 'attendance': 'Present'},
+  ];
+
+  // Select the main attendance date
   _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -405,11 +509,14 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != selectedDate)
+    if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
       });
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -418,61 +525,166 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'Take Staff Attendance',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Attendance Date: ',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  InkWell(
-                    onTap: () => _selectDate(context),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        selectedDate != null
-                            ? DateFormat('dd/MM/yyyy').format(selectedDate!)
-                            : 'Select Date',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  // Implement your 'Take Attendance' functionality here
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 30),
-                ),
-                child: Text(
-                  'Take Attendance',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+          child: _attendanceTaken
+              ? _buildAttendanceTable()
+              : _buildAttendanceForm(),
         ),
       ),
+    );
+  }
+
+  // Attendance form with date selection
+  Widget _buildAttendanceForm() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'Take Staff Attendance',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Attendance Date: ',
+              style: TextStyle(fontSize: 18),
+            ),
+            InkWell(
+              onTap: () => _selectDate(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 8, horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  selectedDate != null
+                      ? DateFormat('dd/MM/yyyy').format(selectedDate!)
+                      : 'Select Date',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              _attendanceTaken = true;
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme
+                .of(context)
+                .primaryColor,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+          ),
+          child: const Text(
+            'Take Attendance',
+            style: TextStyle(fontSize: 18, color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+// Attendance table grid after clicking "Take Attendance"
+  Widget _buildAttendanceTable() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        if (selectedDate != null)
+          Text(
+            'Attendance Date: ${DateFormat('dd/MM/yyyy').format(
+                selectedDate!)}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        const SizedBox(height: 20),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: const [
+                DataColumn(label: Text('Sr. No.')),
+                DataColumn(label: Text('Staff Name')),
+                DataColumn(label: Text('Attendance')),
+              ],
+              rows: attendanceData.map((data) {
+                return DataRow(cells: [
+                  DataCell(Text(data['srNo']!)),
+                  DataCell(Text(data['staffName']!)),
+                  DataCell(
+                    _isEditable
+                        ? DropdownButton<String>(
+                      value: data['attendance'],
+                      items: ['Present', 'Absent'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          data['attendance'] = newValue!;
+                        });
+                      },
+                    )
+                        : Text(data['attendance']!),
+                  ),
+                ]);
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isEditable = !_isEditable;
+                  });
+                },
+                icon: Icon(_isEditable ? Icons.lock : Icons.edit),
+                label: Text(_isEditable ? 'Stop Edit' : 'Edit'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 0),
+                ),
+              ),
+            ),
+    const SizedBox(width: 20),
+    ElevatedButton(
+    onPressed: () {
+    // Implement your 'Update Attendance' functionality here
+    setState(() {
+    _isEditable = false;
+    });
+    },
+    style: ElevatedButton.styleFrom(
+    backgroundColor: Theme.of(context).primaryColor,
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+    ),
+    child: const Text(
+    'Update Attendance',
+    style: TextStyle(fontSize: 18, color: Colors.white),
+    ),
+    ),
+
+          ],
+        ),
+      ],
     );
   }
 }
