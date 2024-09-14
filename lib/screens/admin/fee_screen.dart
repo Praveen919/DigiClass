@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FeeScreen extends StatelessWidget {
   final String option;
 
-  FeeScreen({this.option = 'createFeeStructure'});
+  const FeeScreen({this.option = 'createFeeStructure'});
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +23,6 @@ class FeeScreen extends StatelessWidget {
         return CreateFeeStructureScreen();
       case 'manageFeeStructure':
         return ManageFeeStructureScreen();
-      case 'feeCollection':
-        return FeeCollectionScreen();
       default:
         return Center(child: Text('Unknown Option'));
     }
@@ -31,34 +31,49 @@ class FeeScreen extends StatelessWidget {
 
 class CreateFeeStructureScreen extends StatefulWidget {
   @override
-  _CreateFeeStructureScreenState createState() => _CreateFeeStructureScreenState();
+  _CreateFeeStructureScreenState createState() =>
+      _CreateFeeStructureScreenState();
 }
 
 class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
   String? selectedStandard;
   String? selectedCourseType;
-  String feeAmount = '';
-  String remark = '';
 
-  final List<Map<String, String>> feeStructures = [];
+  final TextEditingController feeAmountController = TextEditingController();
+  final TextEditingController remarkController = TextEditingController();
 
-  void _saveFeeStructure() {
-    setState(() {
-      feeStructures.add({
+  Future<void> _saveFeeStructure() async {
+    final response = await http.post(
+      Uri.parse('http://192.168.0.102:3000/api/fee-structures'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
         'standard': selectedStandard ?? '',
         'courseType': selectedCourseType ?? '',
-        'feeAmount': feeAmount,
-        'remark': remark,
-      });
-    });
+        'feeAmount': feeAmountController.text,
+        'remark': remarkController.text,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      // Fee structure saved successfully
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fee structure saved successfully')),
+      );
+      _resetForm(); // Optionally reset form after successful save
+    } else {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save fee structure')),
+      );
+    }
   }
 
   void _resetForm() {
     setState(() {
       selectedStandard = null;
       selectedCourseType = null;
-      feeAmount = '';
-      remark = '';
+      feeAmountController.clear(); // Clear fee amount text
+      remarkController.clear(); // Clear remark text
     });
   }
 
@@ -76,20 +91,20 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
             ),
             SizedBox(height: 16),
             _buildDropdownField('Standard *', '-- Select --', (value) {
-              selectedStandard = value;
+              setState(() {
+                selectedStandard = value;
+              });
             }),
             SizedBox(height: 16),
             _buildDropdownField('Course Type *', '-- Select --', (value) {
-              selectedCourseType = value;
+              setState(() {
+                selectedCourseType = value;
+              });
             }),
             SizedBox(height: 16),
-            _buildTextField('Fee Amount *', (value) {
-              feeAmount = value;
-            }),
+            _buildTextField('Fee Amount *', feeAmountController),
             SizedBox(height: 16),
-            _buildTextField('Remark:', (value) {
-              remark = value;
-            }),
+            _buildTextField('Remark:', remarkController),
             SizedBox(height: 24),
             Row(
               children: [
@@ -120,7 +135,8 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
     );
   }
 
-  Widget _buildDropdownField(String label, String hint, Function(String?) onChanged) {
+  Widget _buildDropdownField(
+      String label, String hint, Function(String?) onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -142,6 +158,7 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
               value: 'Standard 2',
               child: Text('Standard 2'),
             ),
+            // Add more items as needed
           ],
           onChanged: onChanged,
           hint: Text(hint),
@@ -151,7 +168,7 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
     );
   }
 
-  Widget _buildTextField(String label, Function(String) onChanged) {
+  Widget _buildTextField(String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -161,10 +178,13 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
         ),
         SizedBox(height: 8),
         TextFormField(
+          controller: controller,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
           ),
-          onChanged: onChanged,
+          keyboardType: label.contains('Amount')
+              ? TextInputType.number
+              : TextInputType.text,
         ),
       ],
     );
@@ -173,14 +193,51 @@ class _CreateFeeStructureScreenState extends State<CreateFeeStructureScreen> {
 
 class ManageFeeStructureScreen extends StatefulWidget {
   @override
-  _ManageFeeStructureScreenState createState() => _ManageFeeStructureScreenState();
+  _ManageFeeStructureScreenState createState() =>
+      _ManageFeeStructureScreenState();
 }
 
 class _ManageFeeStructureScreenState extends State<ManageFeeStructureScreen> {
-  List<Map<String, String>> feeStructures = [
-    {'standard': 'Standard 1', 'courseType': 'Type 1', 'feeAmount': '1000'},
-    {'standard': 'Standard 2', 'courseType': 'Type 2', 'feeAmount': '2000'},
-  ];
+  List<Map<String, dynamic>> feeStructures = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFeeStructures();
+  }
+
+  Future<void> _fetchFeeStructures() async {
+    try {
+      final response =
+      await http.get(Uri.parse('http://192.168.0.102:3000/api/fee-structures'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          feeStructures = data.map((item) {
+            return {
+              '_id': item['_id'] as String,
+              'standard': item['standard'] as String,
+              'courseType': item['courseType'] as String,
+              'feeAmount': item['feeAmount'] as String,
+              'remark': item['remark'] as String,
+            };
+          }).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load fee structures');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   void _editFeeStructure(int index) {
     Navigator.push(
@@ -195,17 +252,41 @@ class _ManageFeeStructureScreenState extends State<ManageFeeStructureScreen> {
           },
         ),
       ),
-    );
+    ).then((_) {
+      // Fetch data again after editing to ensure it is updated
+      _fetchFeeStructures();
+    });
   }
 
-  void _deleteFeeStructure(int index) {
-    setState(() {
-      feeStructures.removeAt(index);
-    });
+  void _deleteFeeStructure(int index) async {
+    final id = feeStructures[index]['_id'];
+    try {
+      final response = await http
+          .delete(Uri.parse('http://192.168.0.102:3000/api/fee-structures/$id'));
+
+      if (response.statusCode == 200) {
+        setState(() {
+          feeStructures.removeAt(index);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fee Structure deleted')),
+        );
+      } else {
+        throw Exception('Failed to delete fee structure');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView.builder(
@@ -219,6 +300,7 @@ class _ManageFeeStructureScreenState extends State<ManageFeeStructureScreen> {
                     'Course Type: ${feeStructure['courseType']}\n'
                     'Fee Amount: ${feeStructure['feeAmount']}',
               ),
+              subtitle: Text('Remark: ${feeStructure['remark']}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -241,8 +323,8 @@ class _ManageFeeStructureScreenState extends State<ManageFeeStructureScreen> {
 }
 
 class EditFeeStructureScreen extends StatefulWidget {
-  final Map<String, String> feeStructure;
-  final void Function(Map<String, String>) onSave;
+  final Map<String, dynamic> feeStructure;
+  final void Function(Map<String, dynamic>) onSave;
 
   EditFeeStructureScreen({required this.feeStructure, required this.onSave});
 
@@ -254,22 +336,49 @@ class _EditFeeStructureScreenState extends State<EditFeeStructureScreen> {
   late String selectedStandard;
   late String selectedCourseType;
   late String feeAmount;
+  late String remark;
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    selectedStandard = widget.feeStructure['standard']!;
-    selectedCourseType = widget.feeStructure['courseType']!;
-    feeAmount = widget.feeStructure['feeAmount']!;
+    selectedStandard = widget.feeStructure['standard'] ?? '';
+    selectedCourseType = widget.feeStructure['courseType'] ?? '';
+    feeAmount = widget.feeStructure['feeAmount'] ?? '';
+    remark = widget.feeStructure['remark'] ?? '';
   }
 
-  void _saveChanges() {
-    widget.onSave({
-      'standard': selectedStandard,
-      'courseType': selectedCourseType,
-      'feeAmount': feeAmount,
-    });
-    Navigator.pop(context);
+  Future<void> _saveChanges() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final updatedFeeStructure = {
+        'standard': selectedStandard,
+        'courseType': selectedCourseType,
+        'feeAmount': feeAmount,
+        'remark': remark,
+      };
+
+      try {
+        final response = await http.put(
+          Uri.parse(
+              'http://192.168.0.102:3000/api/fee-structures/${widget.feeStructure['_id']}'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(updatedFeeStructure),
+        );
+
+        if (response.statusCode == 200) {
+          widget.onSave(updatedFeeStructure);
+          Navigator.pop(context);
+        } else {
+          throw Exception('Failed to update fee structure');
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -280,41 +389,51 @@ class _EditFeeStructureScreenState extends State<EditFeeStructureScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDropdownField('Standard *', (value) {
-              setState(() {
-                selectedStandard = value!;
-              });
-            }, selectedStandard),
-            SizedBox(height: 16),
-            _buildDropdownField('Course Type *', (value) {
-              setState(() {
-                selectedCourseType = value!;
-              });
-            }, selectedCourseType),
-            SizedBox(height: 16),
-            _buildTextField('Fee Amount *', (value) {
-              setState(() {
-                feeAmount = value;
-              });
-            }, feeAmount),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _saveChanges,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDropdownField('Standard *', (value) {
+                setState(() {
+                  selectedStandard = value!;
+                });
+              }, selectedStandard),
+              SizedBox(height: 16),
+              _buildDropdownField('Course Type *', (value) {
+                setState(() {
+                  selectedCourseType = value!;
+                });
+              }, selectedCourseType),
+              SizedBox(height: 16),
+              _buildTextField('Fee Amount *', (value) {
+                setState(() {
+                  feeAmount = value;
+                });
+              }, feeAmount),
+              SizedBox(height: 16),
+              _buildTextField('Remark:', (value) {
+                setState(() {
+                  remark = value;
+                });
+              }, remark),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _saveChanges,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+                child: Text('SAVE'),
               ),
-              child: Text('SAVE'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDropdownField(String label, Function(String?) onChanged, String currentValue) {
+  Widget _buildDropdownField(
+      String label, Function(String?) onChanged, String currentValue) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -336,15 +455,19 @@ class _EditFeeStructureScreenState extends State<EditFeeStructureScreen> {
               value: 'Standard 2',
               child: Text('Standard 2'),
             ),
+            // Add more items as needed
           ],
           onChanged: onChanged,
           value: currentValue,
+          validator: (value) =>
+          value == null || value.isEmpty ? 'This field is required' : null,
         ),
       ],
     );
   }
 
-  Widget _buildTextField(String label, Function(String) onChanged, String currentValue) {
+  Widget _buildTextField(
+      String label, Function(String) onChanged, String currentValue) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -359,15 +482,10 @@ class _EditFeeStructureScreenState extends State<EditFeeStructureScreen> {
             border: OutlineInputBorder(),
           ),
           onChanged: onChanged,
+          validator: (value) =>
+          value == null || value.isEmpty ? 'This field is required' : null,
         ),
       ],
     );
-  }
-}
-
-class FeeCollectionScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Fee Collection Screen'));
   }
 }
