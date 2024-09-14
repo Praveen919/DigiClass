@@ -50,8 +50,6 @@ class _StudentScreenState extends State<StudentScreen> {
         return const StudentsFeedbackScreen();
       case 'studentRights':
         return const StudentRightsScreen();
-      case 'appAccessRights':
-        return const AppAccessRightsScreen();
       default:
         return const Center(child: Text('Unknown Option'));
     }
@@ -1122,7 +1120,6 @@ class AssignClassBatchScreen extends StatelessWidget {
   }
 }
 
-
 class StudentAttendanceScreen extends StatefulWidget {
   const StudentAttendanceScreen({super.key});
 
@@ -1138,130 +1135,307 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   bool _displayClassBatch = false;
   String? _selectedClassBatch;
 
+  // State flag to switch between form and attendance table
+  bool _attendanceTaken = false;
+  bool _isEditable = false;
+
+  DateTime? _fromDate;
+  DateTime? _toDate;
+
+  // Dummy attendance data (this would come from a backend or database)
+  List<Map<String, String>> attendanceData = [
+    {'srNo': '1', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 1', 'attendance': 'Present'},
+    {'srNo': '2', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 2', 'attendance': 'Absent'},
+    {'srNo': '3', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 3', 'attendance': 'Present'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Take Student Attendance', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16.0),
-
-            // Attendance Date
-            Row(
-              children: [
-                Flexible(
-                  flex: 3,  // Adjust the flex ratio to give more space to the month dropdown
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedMonth,
-                    items: <String>[
-                      'January', 'February', 'March', 'April', 'May', 'June',
-                      'July', 'August', 'September', 'October', 'November', 'December'
-                    ].map((String value) => DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    )).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedMonth = newValue!;
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Month',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8.0), // Reduced width
-                Flexible(
-                  flex: 1,
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Day',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    initialValue: _day,
-                    onChanged: (value) {
-                      setState(() {
-                        _day = value;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8.0), // Reduced width
-                Flexible(
-                  flex: 2, // Slightly more space for year
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Year',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    initialValue: _year,
-                    onChanged: (value) {
-                      setState(() {
-                        _year = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-
-            // Display my Class/Batch (Time table wise)
-            CheckboxListTile(
-              title: const Text('Display my Class/Batch(Time table wise)'),
-              value: _displayClassBatch,
-              onChanged: (bool? value) {
-                setState(() {
-                  _displayClassBatch = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 16.0),
-
-            // Class/Batch
-            DropdownButtonFormField<String>(
-              value: _selectedClassBatch,
-              hint: const Text('-- Select --'),
-              items: <String>[
-                'Class/Batch 1', 'Class/Batch 2', 'Class/Batch 3'
-              ].map((String value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              )).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedClassBatch = newValue;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Class/Batch*',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 32.0),
-
-            // Take Attendance Button
-            ElevatedButton(
-              onPressed: () {
-                // Implement take attendance functionality
-              },
-              child: const Text('Take Attendance'),
-            ),
-          ],
-        ),
+        child: _attendanceTaken ? _buildAttendanceTable() : _buildAttendanceForm(),
       ),
     );
   }
+
+  // Attendance form
+  Widget _buildAttendanceForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Take Student Attendance', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16.0),
+
+        // Attendance Date
+        Row(
+          children: [
+            Flexible(
+              flex: 3, // Adjust the flex ratio to give more space to the month dropdown
+              child: DropdownButtonFormField<String>(
+                value: _selectedMonth,
+                items: <String>[
+                  'January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'
+                ].map((String value) => DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                )).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedMonth = newValue!;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Month',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8.0), // Reduced width
+            Flexible(
+              flex: 1,
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Day',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                initialValue: _day,
+                onChanged: (value) {
+                  setState(() {
+                    _day = value;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 8.0), // Reduced width
+            Flexible(
+              flex: 2, // Slightly more space for year
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Year',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                initialValue: _year,
+                onChanged: (value) {
+                  setState(() {
+                    _year = value;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+
+        // Display my Class/Batch (Time table wise)
+        CheckboxListTile(
+          title: const Text('Display my Class/Batch (Time table wise)'),
+          value: _displayClassBatch,
+          onChanged: (bool? value) {
+            setState(() {
+              _displayClassBatch = value!;
+            });
+          },
+        ),
+        const SizedBox(height: 16.0),
+
+        // Class/Batch
+        DropdownButtonFormField<String>(
+          value: _selectedClassBatch,
+          hint: const Text('-- Select --'),
+          items: <String>[
+            'Class/Batch 1', 'Class/Batch 2', 'Class/Batch 3'
+          ].map((String value) => DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          )).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedClassBatch = newValue;
+            });
+          },
+          decoration: const InputDecoration(
+            labelText: 'Class/Batch*',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 32.0),
+
+        // Take Attendance Button
+        ElevatedButton(
+          onPressed: () {
+            // Toggle the attendance view
+            setState(() {
+              _attendanceTaken = true;
+            });
+          },
+          child: const Text('Take Attendance'),
+        ),
+      ],
+    );
+  }
+
+  // Attendance table after "Take Attendance" is pressed
+  Widget _buildAttendanceTable() {
+    return Column(
+      children: [
+        // Search bar (if needed)
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Search',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16.0),
+
+        // Date range selection
+        Row(
+          children: [
+            Expanded(
+              child: _buildDatePicker('From Date', onDateSelected: (date) {
+                setState(() {
+                  _fromDate = date;
+                });
+              }),
+            ),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: _buildDatePicker('To Date', onDateSelected: (date) {
+                setState(() {
+                  _toDate = date;
+                });
+              }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+
+        // Attendance data table
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: const [
+                DataColumn(label: Text('Sr. No.')),
+                DataColumn(label: Text('Date')),
+                DataColumn(label: Text('Class/Batch')),
+                DataColumn(label: Text('Student')),
+                DataColumn(label: Text('Attendance')),
+              ],
+              rows: attendanceData.map((data) {
+                return DataRow(cells: [
+                  DataCell(Text(data['srNo']!)),
+                  DataCell(Text(data['date']!)),
+                  DataCell(Text(data['classBatch']!)),
+                  DataCell(Text(data['student']!)),
+                  DataCell(
+                    _isEditable
+                        ? DropdownButton<String>(
+                      value: data['attendance'],
+                      items: ['Present', 'Absent'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          data['attendance'] = newValue!;
+                        });
+                      },
+                    )
+                        : Text(data['attendance']!),
+                  ),
+                ]);
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16.0),
+
+        // Edit and Update buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isEditable = !_isEditable;
+                });
+              },
+              icon: Icon(_isEditable ? Icons.lock : Icons.edit),
+              label: Text(_isEditable ? 'Stop Edit' : 'Edit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
+            ),
+            const SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Implement your 'Update Attendance' functionality here
+                setState(() {
+                  _isEditable = false;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
+              child: const Text(
+                'Update Attendance',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Helper widget to build the date picker
+  Widget _buildDatePicker(String label, {required Function(DateTime) onDateSelected}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: _formatDate(label == 'From Date' ? _fromDate : _toDate),
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () async {
+                  DateTime? selectedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2101),
+                  );
+                  if (selectedDate != null && selectedDate != DateTime.now()) {
+                    onDateSelected(selectedDate);
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    return date != null ? DateFormat('dd/MM/yyyy').format(date) : 'Select Date';
+  }
 }
-
-
-
 class ShareDocumentsScreen extends StatefulWidget {
   const ShareDocumentsScreen({super.key});
 
@@ -1890,91 +2064,5 @@ class _StudentRightsScreenState extends State<StudentRightsScreen> {
   }
 }
 
-class AppAccessRightsScreen extends StatefulWidget {
-  const AppAccessRightsScreen({Key? key}) : super(key: key);
 
-  @override
-  _AppAccessRightsScreenState createState() => _AppAccessRightsScreenState();
-}
 
-class _AppAccessRightsScreenState extends State<AppAccessRightsScreen> {
-  String selectedRights = 'Admin';
-  List<String> users = ['User-1 Name', 'User-2 Name', 'User-3 Name'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'App Access Rights',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('Check App Access Rights'),
-              style: ElevatedButton.styleFrom(foregroundColor: Colors.black, backgroundColor: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            const Text('Check Rights:', style: TextStyle(fontWeight: FontWeight.bold)),
-            RadioListTile(
-              title: const Text('Check Admin Rights'),
-              value: 'Admin',
-              groupValue: selectedRights,
-              onChanged: (value) => setState(() => selectedRights = value.toString()),
-            ),
-            RadioListTile(
-              title: const Text('Check Teacher Rights'),
-              value: 'Teacher',
-              groupValue: selectedRights,
-              onChanged: (value) => setState(() => selectedRights = value.toString()),
-            ),
-            RadioListTile(
-              title: const Text('Check Student Rights'),
-              value: 'Student',
-              groupValue: selectedRights,
-              onChanged: (value) => setState(() => selectedRights = value.toString()),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('Check Rights'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            ),
-            const SizedBox(height: 16),
-            const Text('Users with Admin Rights:', style: TextStyle(fontWeight: FontWeight.bold)),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: users.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(child: Text('U${index + 1}')),
-                  title: Text(users[index]),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(icon: Icon(Icons.edit), onPressed: () {}),
-                      IconButton(icon: Icon(Icons.delete), onPressed: () {}),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('Update'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
