@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node index.js",
-    "build": "console.log(Project is Building)"
+    "build": "npm i"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
