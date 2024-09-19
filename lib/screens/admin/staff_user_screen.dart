@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:testing_app/screens/config.dart';
 
 class StaffUserScreen extends StatefulWidget {
   final String option;
@@ -50,13 +51,9 @@ class _StaffUserScreenState extends State<StaffUserScreen> {
       case 'createStaff':
         return CreateStaffScreen(onSave: addStaff);
       case 'manageStaff':
-        return ManageStaffScreen(
-          staffList: staffList,
-          onEdit: editStaff,
-          onDelete: deleteStaff,
-        );
+        return ManageStaffScreen();
       case 'manageStaffRights':
-        return ManageStaffRightsScreen(staffList: staffList); // Pass the staff list here
+        return ManageStaffRightsScreen(); // Pass the staff list here
       case 'staffAttendance':
         return const StaffAttendanceScreen();
       default:
@@ -137,12 +134,11 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
       };
 
       final staffUrl = widget.staff == null
-          ? 'http://192.168.0.102:3000/api/staff' // URL for creating staff
-          : 'http://192.168.0.102:3000/api/staff/${widget.staff!['id']}'; // URL for updating staff
+          ? '${AppConfig.baseUrl}/api/staff' // URL for creating staff
+          : '${AppConfig.baseUrl}/api/staff/${widget.staff!['id']}'; // URL for updating staff
 
       final method = widget.staff == null ? 'POST' : 'PUT';
 
-      // Save to staff collection
       final staffResponse = await http.post(
         Uri.parse(staffUrl),
         headers: {
@@ -151,15 +147,15 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
         body: jsonEncode(staffData),
       );
 
-      // Save to users collection for login
+      // If new staff, create user in users collection
       if (widget.staff == null) {
         final usersData = {
           'email': _emailController.text,
           'password': _passwordController.text,
-          'role': 'staff',  // Define role as staff
+          'role': 'staff', // Define role as staff
         };
 
-        final usersUrl = 'http://192.168.0.102:3000/api/users/create'; // URL for creating users
+        final usersUrl = '${AppConfig.baseUrl}/api/auth/register';
 
         final usersResponse = await http.post(
           Uri.parse(usersUrl),
@@ -194,6 +190,7 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
       }
     }
   }
+
 
   Widget _buildTextField(String label, TextEditingController controller, {bool readOnly = false}) {
     return TextFormField(
@@ -313,22 +310,57 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
 }
 
 
-class ManageStaffScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> staffList;
-  final Function(int, Map<String, dynamic>) onEdit;
-  final Function(int) onDelete;
+class ManageStaffScreen extends StatefulWidget {
+  @override
+  _ManageStaffScreenState createState() => _ManageStaffScreenState();
+}
 
-  const ManageStaffScreen({
-    super.key,
-    required this.staffList,
-    required this.onEdit,
-    required this.onDelete,
-  });
+class _ManageStaffScreenState extends State<ManageStaffScreen> {
+  List<Map<String, dynamic>> staffList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStaffList();  // Fetch staff list on initialization
+  }
+
+  Future<void> _fetchStaffList() async {
+    final url = '${AppConfig.baseUrl}/api/staff';  // Replace with your backend URL
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          staffList = data.map((staff) => {
+            'firstName': staff['firstName'],
+            'lastName': staff['lastName'],
+            'email': staff['email'],
+            'profilePicture': staff['profilePicture'],
+          }).toList();
+        });
+      } else {
+        print('Failed to load staff');
+      }
+    } catch (e) {
+      print('Error fetching staff list: $e');
+    }
+  }
+
+  void _onEdit(int index, Map<String, dynamic> staff) {
+    // Handle edit staff
+  }
+
+  void _onDelete(int index) {
+    // Handle delete staff
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView.builder(
+      body: staffList.isEmpty
+          ? Center(child: CircularProgressIndicator())  // Show loading spinner while data is loading
+          : ListView.builder(
         itemCount: staffList.length,
         itemBuilder: (context, index) {
           final staff = staffList[index];
@@ -347,11 +379,11 @@ class ManageStaffScreen extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.edit),
-                  onPressed: () => onEdit(index, staff),
+                  onPressed: () => _onEdit(index, staff),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => onDelete(index),
+                  onPressed: () => _onDelete(index),
                 ),
               ],
             ),
@@ -363,17 +395,90 @@ class ManageStaffScreen extends StatelessWidget {
 }
 
 class ManageStaffRightsScreen extends StatefulWidget {
-  final List<Map<String, dynamic>> staffList;
-
-  const ManageStaffRightsScreen({Key? key, required this.staffList}) : super(key: key);
-
   @override
   _ManageStaffRightsScreenState createState() => _ManageStaffRightsScreenState();
 }
 
 class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
+  List<Map<String, dynamic>> staffList = [];
   String? _selectedStaff;
   String? _selectedRight;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTeachers();  // Fetch teachers on initialization
+  }
+
+  Future<void> _fetchTeachers() async {
+    final url = '${AppConfig.baseUrl}/api/users/teachers';  // Replace with your backend URL
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          staffList = data.map((staff) => {
+            'id': staff['_id'],
+            'firstName': staff['firstName'],
+            'middleName': staff['middleName'],
+            'lastName': staff['lastName'],
+          }).toList();
+        });
+      } else {
+        print('Failed to load staff');
+      }
+    } catch (e) {
+      print('Error fetching staff list: $e');
+    }
+  }
+
+  Future<void> _grantRights() async {
+    if (_selectedStaff != null && _selectedRight != null) {
+      final selectedStaffId = _selectedStaff;
+      String newRole;
+
+      switch (_selectedRight) {
+        case 'Grant Admin Rights':
+          newRole = 'Admin';
+          break;
+        case 'Grant Teacher Rights':
+          newRole = 'Teacher';
+          break;
+        case 'Grant Student Rights':
+          newRole = 'Student';
+          break;
+        default:
+          newRole = 'Teacher';  // Default case
+      }
+
+      // Send the request to update the user role
+      final url = '${AppConfig.baseUrl}/api/users/updateRole/$selectedStaffId';  // Replace with your backend URL
+
+      try {
+        final response = await http.put(
+          Uri.parse(url),
+          headers: {"Content-Type": "application/json"},
+          body: json.encode({'role': newRole}),
+        );
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$_selectedRight granted to ${staffList.firstWhere((staff) => staff['id'] == _selectedStaff)['firstName']}'),
+          ));
+        } else {
+          print('Failed to update role');
+        }
+      } catch (e) {
+        print('Error updating user role: $e');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Please select both staff and rights'),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -394,9 +499,9 @@ class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
                 border: OutlineInputBorder(),
               ),
               value: _selectedStaff,
-              items: widget.staffList.map((staff) {
+              items: staffList.map((staff) {
                 return DropdownMenuItem<String>(
-                  value: '${staff['id']}', // Use ID for unique identification
+                  value: staff['id'],
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.grey,
@@ -453,53 +558,68 @@ class _ManageStaffRightsScreenState extends State<ManageStaffRightsScreen> {
       },
     );
   }
-
-  void _grantRights() {
-    if (_selectedStaff != null && _selectedRight != null) {
-      // Extract the staff ID from the selected staff
-      final selectedStaffId = widget.staffList.firstWhere(
-              (staff) => '${staff['id']}' == _selectedStaff,
-          orElse: () => {}
-      )['id'];
-
-      if (selectedStaffId != null) {
-        // Here you can add the logic to save the granted rights to the backend/database
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('$_selectedRight granted to ${widget.staffList.firstWhere((staff) => '${staff['id']}' == _selectedStaff)['firstName']}'),
-        ));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error granting rights. Staff not found.'),
-        ));
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Please select both staff and rights'),
-      ));
-    }
-  }
 }
+
 
 class StaffAttendanceScreen extends StatefulWidget {
   const StaffAttendanceScreen({super.key});
 
   @override
-  _ManageStaffAttendanceScreenState createState() => _ManageStaffAttendanceScreenState();
+  _ManageStaffAttendanceScreenState createState() =>
+      _ManageStaffAttendanceScreenState();
 }
 
 class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
   DateTime? selectedDate;
-  DateTime? fromDate;
-  DateTime? toDate;
   bool _attendanceTaken = false;
   bool _isEditable = false;
 
-  // Dummy attendance data (to simulate actual attendance records)
-  List<Map<String, String>> attendanceData = [
-    {'srNo': '1', 'staffName': 'Staff 1', 'attendance': 'Present'},
-    {'srNo': '2', 'staffName': 'Staff 2', 'attendance': 'Absent'},
-    {'srNo': '3', 'staffName': 'Staff 3', 'attendance': 'Present'},
-  ];
+  // Replace dummy data with actual data from the server
+  List<Map<String, dynamic>> attendanceData = [];
+
+  // Fetch teacher data from the server
+  Future<void> fetchTeachers() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.0.104/api/users/teachers'));
+      if (response.statusCode == 200) {
+        setState(() {
+          attendanceData = List<Map<String, dynamic>>.from(json.decode(response.body));
+          // Add 'attendance' field if not present
+          for (var teacher in attendanceData) {
+            teacher['attendance'] = 'Present';  // Default value
+          }
+        });
+      } else {
+        print('Failed to load teachers');
+      }
+    } catch (error) {
+      print('Error: $error');
+    }
+  }
+
+  // Update attendance on the server
+  Future<void> updateAttendance() async {
+    try {
+      final response = await http.put(
+        Uri.parse('http://your-server-address/api/users/attendance'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'attendance': attendanceData}),
+      );
+      if (response.statusCode == 200) {
+        print('Attendance updated successfully');
+      } else {
+        print('Failed to update attendance');
+      }
+    } catch (error) {
+      print('Error: $error');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTeachers(); // Fetch teacher data when the screen loads
+  }
 
   // Select the main attendance date
   _selectDate(BuildContext context) async {
@@ -516,8 +636,6 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -525,9 +643,7 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _attendanceTaken
-              ? _buildAttendanceTable()
-              : _buildAttendanceForm(),
+          child: _attendanceTaken ? _buildAttendanceTable() : _buildAttendanceForm(),
         ),
       ),
     );
@@ -557,8 +673,7 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
             InkWell(
               onTap: () => _selectDate(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 8, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(5),
@@ -573,7 +688,6 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
             ),
           ],
         ),
-
         const SizedBox(height: 30),
         ElevatedButton(
           onPressed: () {
@@ -582,9 +696,7 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Theme
-                .of(context)
-                .primaryColor,
+            backgroundColor: Theme.of(context).primaryColor,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
           ),
           child: const Text(
@@ -596,15 +708,14 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
     );
   }
 
-// Attendance table grid after clicking "Take Attendance"
+  // Attendance table grid after clicking "Take Attendance"
   Widget _buildAttendanceTable() {
     return Column(
       children: [
         const SizedBox(height: 20),
         if (selectedDate != null)
           Text(
-            'Attendance Date: ${DateFormat('dd/MM/yyyy').format(
-                selectedDate!)}',
+            'Attendance Date: ${DateFormat('dd/MM/yyyy').format(selectedDate!)}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         const SizedBox(height: 20),
@@ -617,10 +728,13 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
                 DataColumn(label: Text('Staff Name')),
                 DataColumn(label: Text('Attendance')),
               ],
-              rows: attendanceData.map((data) {
+              rows: attendanceData.asMap().entries.map((entry) {
+                int index = entry.key;
+                var data = entry.value;
+
                 return DataRow(cells: [
-                  DataCell(Text(data['srNo']!)),
-                  DataCell(Text(data['staffName']!)),
+                  DataCell(Text('${index + 1}')),
+                  DataCell(Text(data['firstName'] + ' ' + data['lastName'])),
                   DataCell(
                     _isEditable
                         ? DropdownButton<String>(
@@ -659,29 +773,27 @@ class _ManageStaffAttendanceScreenState extends State<StaffAttendanceScreen> {
                 label: Text(_isEditable ? 'Stop Edit' : 'Edit'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 0),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
                 ),
               ),
             ),
-    const SizedBox(width: 20),
-    ElevatedButton(
-    onPressed: () {
-    // Implement your 'Update Attendance' functionality here
-    setState(() {
-    _isEditable = false;
-    });
-    },
-    style: ElevatedButton.styleFrom(
-    backgroundColor: Theme.of(context).primaryColor,
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-    ),
-    child: const Text(
-    'Update Attendance',
-    style: TextStyle(fontSize: 18, color: Colors.white),
-    ),
-    ),
-
+            const SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: () {
+                updateAttendance(); // Call the update attendance method
+                setState(() {
+                  _isEditable = false;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
+              child: const Text(
+                'Update Attendance',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
           ],
         ),
       ],
