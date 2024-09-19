@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting dates
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:testing_app/screens/config.dart';
 
 class ReportScreen extends StatefulWidget {
   final String option;
 
-  ReportScreen({required this.option});
+  const ReportScreen({super.key, required this.option});
 
   @override
   _ReportScreenState createState() => _ReportScreenState();
@@ -15,7 +18,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Report'),
+        title: const Text('Report'),
       ),
       body: _buildContent(),
     );
@@ -24,33 +27,27 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget _buildContent() {
     switch (widget.option) {
       case 'studentInquiry':
-        return StudentInquiryReportScreen();
+        return const StudentInquiryReportScreen();
       case 'studentDetail':
-        return StudentDetailReportScreen();
+        return const StudentDetailReportScreen();
       case 'studentCard':
-        return StudentCardReportScreen();
+        return const StudentCardReportScreen();
       case 'studentAttendance':
-        return StudentAttendanceReportScreen();
-      case 'pendingFee':
-        return PendingFeeReportScreen();
+        return const StudentAttendanceReportScreen();
       case 'feeStatus':
-        return FeeStatusReportScreen();
+        return const FeeStatusReportScreen();
       case 'feeCollection':
-        return FeeCollectionScreen();
+        return const FeeCollectionScreen();
       case 'expense':
-        return ExpenseReportScreen();
+        return const ExpenseReportScreen();
       case 'income':
-        return IncomeReportScreen();
+        return const IncomeReportScreen();
       case 'profitLoss':
-        return ProfitLossReportScreen();
-      case 'studentInquiryAnalysis':
-        return StudentInquiryAnalysisReportScreen();
-      case 'feeAnalysis':
-        return FeeAnalysisReportScreen();
+        return const ProfitLossReportScreen();
       case 'appAccessRights':
-        return AppAccessRightsScreen();
+        return const AppAccessRightsScreen();
       default:
-        return Center(child: Text('Unknown Option'));
+        return const Center(child: Text('Unknown Option'));
     }
   }
 }
@@ -59,6 +56,8 @@ class _ReportScreenState extends State<ReportScreen> {
 // Replace these with your actual implementation.
 
 class StudentInquiryReportScreen extends StatefulWidget {
+  const StudentInquiryReportScreen({super.key});
+
   @override
   _StudentInquiryReportScreenState createState() => _StudentInquiryReportScreenState();
 }
@@ -66,8 +65,9 @@ class StudentInquiryReportScreen extends StatefulWidget {
 class _StudentInquiryReportScreenState extends State<StudentInquiryReportScreen> {
   DateTime? fromDate;
   DateTime? toDate;
-  bool isSolved1 = false;
-  bool isSolved2 = false;
+  TextEditingController searchController = TextEditingController();
+  bool isLoading = false;
+  List<Map<String, dynamic>> inquiries = []; // Store inquiries data
 
   // Method to select a date
   Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
@@ -82,34 +82,47 @@ class _StudentInquiryReportScreenState extends State<StudentInquiryReportScreen>
     }
   }
 
+  // Method to fetch data from the database
+  Future<void> _getInquiries() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Fetch the data based on the fromDate and toDate
+    final results = await fetchInquiriesFromDB(fromDate, toDate, searchController.text);
+
+    setState(() {
+      inquiries = results;
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Inquiry Report'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Handle settings action
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
+        title: const Text('Student Inquiry Report'),
       ),
-      drawer: Drawer(), // Add your drawer here
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Search bar
             TextFormField(
-              decoration: InputDecoration(
+              controller: searchController,
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
+              onChanged: (value) {
+                _getInquiries(); // Search filter when typing
+              },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            // Date pickers
             Row(
               children: [
                 Expanded(
@@ -120,19 +133,19 @@ class _StudentInquiryReportScreenState extends State<StudentInquiryReportScreen>
                       });
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _selectDate(context, toDate, (date) {
@@ -141,73 +154,58 @@ class _StudentInquiryReportScreenState extends State<StudentInquiryReportScreen>
                       });
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle Get Data action
-                  },
-                  child: Text('Get Data'),
+                  onPressed: _getInquiries,
+                  child: const Text('Get Data'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    title: Text('Student Name: XXXXXXX\nStandard: XX\nInquiry Date: XX/XX/XXXX\nInquiry Source: XXXXXXXX'),
-                    trailing: IconButton(
-                      icon: Icon(
-                        isSolved1 ? Icons.check_circle : Icons.cancel,
-                        color: isSolved1 ? Colors.green : Colors.red,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isSolved1 = !isSolved1;
-                        });
-                      },
+            const SizedBox(height: 16),
+            // Inquiry list
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Expanded(
+              child: inquiries.isNotEmpty
+                  ? ListView.builder(
+                itemCount: inquiries.length,
+                itemBuilder: (context, index) {
+                  final inquiry = inquiries[index];
+                  return ListTile(
+                    title: Text('Student Name: ${inquiry['studentName']}\nStandard: ${inquiry['standard']}\nInquiry Date: ${inquiry['inquiryDate']}\nInquiry Source: ${inquiry['inquirySource']}'),
+                    subtitle: Text(inquiry['status'] ? 'Solved' : 'Unsolved'),
+                    trailing: Icon(
+                      inquiry['status'] ? Icons.check_circle : Icons.cancel,
+                      color: inquiry['status'] ? Colors.green : Colors.red,
                     ),
-                    subtitle: Text(isSolved1 ? 'Solved' : 'Unsolved'),
-                  ),
-                  Divider(),
-                  ListTile(
-                    title: Text('Student Name: XXXXXXX\nStandard: XX\nInquiry Date: XX/XX/XXXX\nInquiry Source: XXXXXXXX'),
-                    trailing: IconButton(
-                      icon: Icon(
-                        isSolved2 ? Icons.check_circle : Icons.cancel,
-                        color: isSolved2 ? Colors.green : Colors.red,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isSolved2 = !isSolved2;
-                        });
-                      },
-                    ),
-                    subtitle: Text(isSolved2 ? 'Solved' : 'Unsolved'),
-                  ),
-                ],
-              ),
+                  );
+                },
+              )
+                  : const Center(child: Text('No inquiries found')),
             ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Handle Export action
-              },
-              child: Text('Export'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Button color
+            const SizedBox(height: 16),
+            // View Report button
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Handle view report action
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button color
+                ),
+                child: const Text('View Report'),
               ),
             ),
           ],
@@ -215,10 +213,41 @@ class _StudentInquiryReportScreenState extends State<StudentInquiryReportScreen>
       ),
     );
   }
+
+  // Method to fetch inquiries from the database
+  Future<List<Map<String, dynamic>>> fetchInquiriesFromDB(DateTime? fromDate, DateTime? toDate, String search) async {
+    const String apiUrl = '${AppConfig.baseUrl}/inquiries'; // Replace with your actual API endpoint
+
+    try {
+      // Create query parameters
+      Map<String, String> queryParams = {
+        'search': search,
+        'fromDate': fromDate != null ? DateFormat('yyyy-MM-dd').format(fromDate) : '',
+        'toDate': toDate != null ? DateFormat('yyyy-MM-dd').format(toDate) : '',
+      };
+
+      // Make the HTTP GET request
+      final response = await http.get(Uri.parse('$apiUrl?${Uri(queryParameters: queryParams).query}'));
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        List<dynamic> data = json.decode(response.body);
+
+        // Convert JSON data to a list of maps
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to load inquiries');
+      }
+    } catch (e) {
+      print('Error fetching inquiries: $e');
+      return [];
+    }
+  }
 }
 
-
 class StudentDetailReportScreen extends StatefulWidget {
+  const StudentDetailReportScreen({super.key});
+
   @override
   _StudentDetailReportScreenState createState() => _StudentDetailReportScreenState();
 }
@@ -226,6 +255,28 @@ class StudentDetailReportScreen extends StatefulWidget {
 class _StudentDetailReportScreenState extends State<StudentDetailReportScreen> {
   DateTime? fromDate;
   DateTime? toDate;
+  List<dynamic> students = []; // List to hold student data
+  List<dynamic> filteredStudents = []; // Filtered list to be displayed
+  String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStudents(); // Fetch data from the API on screen load
+  }
+
+  Future<void> fetchStudents() async {
+    final response = await http.get(Uri.parse('${AppConfig.baseUrl}/api/students'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        students = data;
+        filteredStudents = data; // Initially, show all students
+      });
+    } else {
+      throw Exception('Failed to load students');
+    }
+  }
 
   // Method to select a date
   Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
@@ -240,42 +291,179 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen> {
     }
   }
 
-  void _editStudentDetail() {
-    // Handle edit action
+  // Filter students by date and search query
+  void _filterStudents() {
+    setState(() {
+      filteredStudents = students.where((student) {
+        bool matchesSearchQuery = student['name']
+            .toLowerCase()
+            .contains(searchQuery.toLowerCase());
+
+        bool matchesFromDate = fromDate == null ||
+            DateTime.parse(student['joinDate']).isAfter(fromDate!);
+
+        bool matchesToDate = toDate == null ||
+            DateTime.parse(student['joinDate']).isBefore(toDate!);
+
+        return matchesSearchQuery && matchesFromDate && matchesToDate;
+      }).toList();
+    });
   }
 
-  void _deleteStudentDetail() {
-    // Handle delete action
+  Future<void> _editStudentDetail(int studentId, Map<String, dynamic> updatedData) async {
+    final response = await http.put(
+      Uri.parse('${AppConfig.baseUrl}/api/students/$studentId'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(updatedData),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        // Update the local students list with the new data
+        final index = students.indexWhere((student) => student['id'] == studentId);
+        if (index != -1) {
+          students[index] = updatedData;
+          _filterStudents(); // Re-filter the list with updated data
+        }
+      });
+    } else {
+      throw Exception('Failed to update student');
+    }
+  }
+
+  Future<void> _deleteStudentDetail(int studentId) async {
+    final response = await http.delete(Uri.parse('${AppConfig.baseUrl}/api/students/$studentId'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        students.removeWhere((student) => student['id'] == studentId);
+        _filterStudents(); // Re-filter the list after deletion
+      });
+    } else {
+      throw Exception('Failed to delete student');
+    }
+  }
+
+  void _showEditDialog(dynamic student) {
+    TextEditingController nameController = TextEditingController(text: student['name']);
+    TextEditingController standardController = TextEditingController(text: student['standard']);
+    TextEditingController courseController = TextEditingController(text: student['course']);
+    TextEditingController batchController = TextEditingController(text: student['batch']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Student'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Student Name'),
+              ),
+              TextField(
+                controller: standardController,
+                decoration: InputDecoration(labelText: 'Standard'),
+              ),
+              TextField(
+                controller: courseController,
+                decoration: InputDecoration(labelText: 'Course'),
+              ),
+              TextField(
+                controller: batchController,
+                decoration: InputDecoration(labelText: 'Batch'),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                final updatedData = {
+                  'id': student['id'],
+                  'name': nameController.text,
+                  'standard': standardController.text,
+                  'course': courseController.text,
+                  'batch': batchController.text,
+                  'joinDate': student['joinDate'],
+                };
+                _editStudentDetail(student['id'], updatedData);
+                Navigator.of(context).pop();
+              },
+              child: Text('Save'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _viewReport() {
+    // You can customize this report view further
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Filtered Student Report'),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: filteredStudents.length,
+              itemBuilder: (context, index) {
+                final student = filteredStudents[index];
+                return ListTile(
+                  title: Text(
+                    'Student Name: ${student['name']}\nStandard: ${student['standard']}\nCourse: ${student['course']}\nBatch: ${student['batch']}\nJoin Date: ${student['joinDate']}',
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Detail Report'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Handle settings action
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
+        title: const Text('Student Detail Report'),
       ),
-      drawer: Drawer(), // Add your drawer here
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+                _filterStudents(); // Filter students based on the search query
+              },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -284,119 +472,84 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen> {
                       setState(() {
                         fromDate = date;
                       });
+                      _filterStudents(); // Apply filter after selecting the from date
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _selectDate(context, toDate, (date) {
                       setState(() {
                         toDate = date;
                       });
+                      _filterStudents(); // Apply filter after selecting the to date
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle Get Data action
-                  },
-                  child: Text('Get Data'),
+                  onPressed: _filterStudents, // Filter data based on selected dates and search query
+                  child: const Text('Get Data'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    title: Text(
-                        'Student Name: XXXXXXX\nStandard: XX\nCourse Name: XXXXXXX\nClass/Batch: XXXXXXX\nJoin Date: XX/XX/XXXX'),
+              child: ListView.builder(
+                itemCount: filteredStudents.length,
+                itemBuilder: (context, index) {
+                  final student = filteredStudents[index];
+                  return ListTile(
+                    title: Text(student['name']),
+                    subtitle: Text(
+                        'Standard: ${student['standard']} | Course: ${student['course']} | Batch: ${student['batch']}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: _editStudentDetail,
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () {
+                            _showEditDialog(student);
+                          },
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: _deleteStudentDetail,
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            _deleteStudentDetail(student['id']);
+                          },
                         ),
                       ],
                     ),
-                  ),
-                  Divider(),
-                  ListTile(
-                    title: Text(
-                        'Student Name: XXXXXXX\nStandard: XX\nCourse Name: XXXXXXX\nClass/Batch: XXXXXXX\nJoin Date: XX/XX/XXXX'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: _editStudentDetail,
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: _deleteStudentDetail,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Divider(),
-                  ListTile(
-                    title: Text(
-                        'Student Name: XXXXXXX\nStandard: XX\nCourse Name: XXXXXXX\nClass/Batch: XXXXXXX\nJoin Date: XX/XX/XXXX'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: _editStudentDetail,
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: _deleteStudentDetail,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-            SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // Handle Export action
-              },
-              child: Text('Export'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Button color
-              ),
+              onPressed: _viewReport, // View the filtered student report
+              child: Text('View Report'),
             ),
           ],
         ),
@@ -406,6 +559,8 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen> {
 }
 
 class StudentCardReportScreen extends StatefulWidget {
+  const StudentCardReportScreen({super.key});
+
   @override
   _StudentCardReportScreenState createState() => _StudentCardReportScreenState();
 }
@@ -421,7 +576,7 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != (isFromDate ? _fromDate : _toDate))
+    if (picked != null && picked != (isFromDate ? _fromDate : _toDate)) {
       setState(() {
         if (isFromDate) {
           _fromDate = picked;
@@ -429,16 +584,18 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
           _toDate = picked;
         }
       });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Card Report'),
+        automaticallyImplyLeading : false,
+        title: const Text('Student Card Report'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -447,14 +604,14 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
               decoration: InputDecoration(
                 hintText: 'Search',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: () {
                     // Implement search functionality here
                   },
                 ),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // From Date and To Date
             Row(
@@ -463,7 +620,7 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
                   child: InkWell(
                     onTap: () => _selectDate(context, true),
                     child: InputDecorator(
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'From Date',
                         border: OutlineInputBorder(),
                       ),
@@ -475,12 +632,12 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
                     ),
                   ),
                 ),
-                SizedBox(width: 16.0),
+                const SizedBox(width: 16.0),
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDate(context, false),
                     child: InputDecorator(
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'To Date',
                         border: OutlineInputBorder(),
                       ),
@@ -494,14 +651,14 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Student Card List
             Expanded(
               child: ListView.builder(
                 itemCount: 2, // Replace with actual number of students
                 itemBuilder: (context, index) {
-                  return StudentCard(
+                  return const StudentCard(
                     // Pass student data here
                   );
                 },
@@ -513,7 +670,7 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
               onPressed: () {
                 // Implement export functionality here
               },
-              child: Text('Export'),
+              child: const Text('Export'),
             ),
           ],
         ),
@@ -524,34 +681,36 @@ class _StudentCardReportScreenState extends State<StudentCardReportScreen> {
 
 // Custom widget for each student card
 class StudentCard extends StatelessWidget {
+  const StudentCard({super.key});
+
   // Add necessary properties for student data
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Student Name, Standard, Batch, etc.
-            Text('Student Name: XXXXXX'),
-            Text('Standard: XX'),
-            Text('Batch: XX'),
-            Text('Attendance: XX%'),
-            Text('Join Date: XX/XX/XX'),
+            const Text('Student Name: XXXXXX'),
+            const Text('Standard: XX'),
+            const Text('Batch: XX'),
+            const Text('Attendance: XX%'),
+            const Text('Join Date: XX/XX/XX'),
 
             // Edit and Delete buttons
             Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit),
+                  icon: const Icon(Icons.edit),
                   onPressed: () {
                     // Implement edit functionality
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete),
+                  icon: const Icon(Icons.delete),
                   onPressed: () {
                     // Implement delete functionality
                   },
@@ -566,16 +725,55 @@ class StudentCard extends StatelessWidget {
 }
 
 class StudentAttendanceReportScreen extends StatefulWidget {
+  const StudentAttendanceReportScreen({super.key});
+
   @override
   _StudentAttendanceReportScreenState createState() => _StudentAttendanceReportScreenState();
 }
 
 class _StudentAttendanceReportScreenState extends State<StudentAttendanceReportScreen> {
-  DateTime? fromDate;
-  DateTime? toDate;
+  DateTime? selectedDate;
+  List<Map<String, dynamic>> allAttendanceData = [];
+  List<Map<String, dynamic>> filteredAttendanceData = [];
+  TextEditingController searchController = TextEditingController();
+
+  // Method to fetch attendance data from API
+  Future<void> _fetchAttendance({String? searchQuery, DateTime? selectedDate}) async {
+    try {
+      String apiUrl = '${AppConfig.baseUrl}/api/attendance';
+
+      // Build query parameters based on inputs (search query, date)
+      Map<String, String> queryParams = {};
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        queryParams['name'] = searchQuery;
+      }
+      if (selectedDate != null) {
+        queryParams['date'] = selectedDate.toIso8601String(); // Convert to ISO string
+      }
+
+      Uri uri = Uri.parse(apiUrl).replace(queryParameters: queryParams);
+
+      // Make the HTTP GET request
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        List<Map<String, dynamic>> fetchedData = List<Map<String, dynamic>>.from(json.decode(response.body));
+
+        setState(() {
+          allAttendanceData = fetchedData;
+          filteredAttendanceData = fetchedData; // Initially display all data
+        });
+      } else {
+        throw Exception('Failed to load attendance data');
+      }
+    } catch (e) {
+      print('Error fetching attendance data: $e');
+      // Handle error (e.g., show a snackbar or message to user)
+    }
+  }
 
   // Method to select a date
-  Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
+  Future<void> _selectDate(BuildContext context, DateTime? initialDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate ?? DateTime.now(),
@@ -583,88 +781,86 @@ class _StudentAttendanceReportScreenState extends State<StudentAttendanceReportS
       lastDate: DateTime(2100),
     );
     if (picked != null && picked != initialDate) {
-      onDateSelected(picked);
+      setState(() {
+        selectedDate = picked;
+      });
     }
+  }
+
+  // Method to handle search
+  void _handleSearch(String searchQuery) {
+    setState(() {
+      filteredAttendanceData = allAttendanceData.where((attendance) {
+        final name = attendance['name'].toLowerCase();
+        return name.contains(searchQuery.toLowerCase());
+      }).toList();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAttendance(); // Fetch all data when screen loads
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Attendance Report'),
+        automaticallyImplyLeading: false,
+        title: const Text('Student Attendance Report'),
       ),
-      drawer: Drawer(), // Add your drawer here
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              decoration: InputDecoration(
+              controller: searchController,
+              onChanged: _handleSearch,
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _selectDate(context, fromDate, (date) {
-                      setState(() {
-                        fromDate = date;
-                      });
-                    }),
+                    onTap: () => _selectDate(context, selectedDate),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
-                        style: TextStyle(color: Colors.black87),
+                        selectedDate != null ? DateFormat.yMMMd().format(selectedDate!) : 'Select Date',
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _selectDate(context, toDate, (date) {
-                      setState(() {
-                        toDate = date;
-                      });
-                    }),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
-                        style: TextStyle(color: Colors.black87),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    // Handle Get Data action
+                    _fetchAttendance(
+                      searchQuery: searchController.text,
+                      selectedDate: selectedDate,
+                    );
                   },
-                  child: Text('Get Data'),
+                  child: const Text('View Report'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  columns: [
+                  columns: const [
                     DataColumn(label: Text('')),
                     DataColumn(label: Text('Name')),
                     DataColumn(label: Text('STD')),
@@ -672,28 +868,18 @@ class _StudentAttendanceReportScreenState extends State<StudentAttendanceReportS
                     DataColumn(label: Text('Attendance')),
                   ],
                   rows: List<DataRow>.generate(
-                    5, // Adjust the number based on your data
+                    filteredAttendanceData.length,
                         (index) => DataRow(
                       cells: [
                         DataCell(Text((index + 1).toString())),
-                        DataCell(Text('Name $index')),
-                        DataCell(Text('STD $index')),
-                        DataCell(Text('Batch $index')),
-                        DataCell(Text('Attendance $index')),
+                        DataCell(Text(filteredAttendanceData[index]['name'])),
+                        DataCell(Text(filteredAttendanceData[index]['std'])),
+                        DataCell(Text(filteredAttendanceData[index]['batch'])),
+                        DataCell(Text(filteredAttendanceData[index]['attendance'])),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Handle Export action
-              },
-              child: Text('Export'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Button color
               ),
             ),
           ],
@@ -703,153 +889,15 @@ class _StudentAttendanceReportScreenState extends State<StudentAttendanceReportS
   }
 }
 
-
-class PendingFeeReportScreen extends StatefulWidget {
-  @override
-  _PendingFeeReportScreenState createState() => _PendingFeeReportScreenState();
-}
-
-class _PendingFeeReportScreenState extends State<PendingFeeReportScreen> {
-  DateTime? fromDate;
-  DateTime? toDate;
-
-  // Method to select a date
-  Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate ?? DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null && picked != initialDate) {
-      onDateSelected(picked);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pending Installment Fee Report'),
-      ),
-      drawer: Drawer(), // Add your drawer here
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _selectDate(context, fromDate, (date) {
-                      setState(() {
-                        fromDate = date;
-                      });
-                    }),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
-                        style: TextStyle(color: Colors.black87),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _selectDate(context, toDate, (date) {
-                      setState(() {
-                        toDate = date;
-                      });
-                    }),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
-                        style: TextStyle(color: Colors.black87),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle Get Data action
-                  },
-                  child: Text('Get Data'),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text('')),
-                    DataColumn(label: Text('Name')),
-                    DataColumn(label: Text('STD')),
-                    DataColumn(label: Text('Batch')),
-                    DataColumn(label: Text('Amt')),
-                  ],
-                  rows: List<DataRow>.generate(
-                    5, // Adjust the number based on your data
-                        (index) => DataRow(
-                      cells: [
-                        DataCell(Text((index + 1).toString())),
-                        DataCell(Text('Name $index')),
-                        DataCell(Text('STD $index')),
-                        DataCell(Text('Batch $index')),
-                        DataCell(Text('Amt $index')),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Handle Export action
-              },
-              child: Text('Export'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Button color
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class FeeStatusReportScreen extends StatelessWidget {
+  const FeeStatusReportScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Variable to hold the selected date
     DateTime? selectedDate;
 
-    // Function to show the date picker and update the selected date
-    Future<void> _selectDate(BuildContext context) async {
+    Future<void> selectDate(BuildContext context) async {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: selectedDate ?? DateTime.now(),
@@ -863,52 +911,53 @@ class FeeStatusReportScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fee Status Report'),
+        automaticallyImplyLeading: false,
+        title: const Text('Fee Status Report'),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Student Name
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Student Name',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Standard
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Standard',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Course Type
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Course Type',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Roll No
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Roll No',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Attendance Date
             GestureDetector(
-              onTap: () => _selectDate(context),
+              onTap: () => selectDate(context),
               child: AbsorbPointer(
                 child: TextFormField(
                   decoration: InputDecoration(
@@ -916,47 +965,47 @@ class FeeStatusReportScreen extends StatelessWidget {
                     hintText: selectedDate != null
                         ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
                         : 'Select Date',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: const Icon(Icons.calendar_today),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // GR. No
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'GR. No',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Category
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Category',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             // Group
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Group',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 32.0),
+            const SizedBox(height: 32.0),
 
             // Search Button
             ElevatedButton(
               onPressed: () {
                 // Implement search functionality here
               },
-              child: Text('Search'),
+              child: const Text('Search'),
             ),
           ],
         ),
@@ -966,6 +1015,8 @@ class FeeStatusReportScreen extends StatelessWidget {
 }
 
 class FeeCollectionScreen extends StatefulWidget {
+  const FeeCollectionScreen({super.key});
+
   @override
   _FeeCollectionReportScreenState createState() => _FeeCollectionReportScreenState();
 }
@@ -991,22 +1042,23 @@ class _FeeCollectionReportScreenState extends State<FeeCollectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fee Collection Report'),
+        automaticallyImplyLeading : false,
+        title: const Text('Fee Collection Report'),
       ),
-      drawer: Drawer(), // Add your drawer here
+       // Add your drawer here
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -1017,19 +1069,19 @@ class _FeeCollectionReportScreenState extends State<FeeCollectionScreen> {
                       });
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _selectDate(context, toDate, (date) {
@@ -1038,33 +1090,33 @@ class _FeeCollectionReportScreenState extends State<FeeCollectionScreen> {
                       });
                     }),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
-                        style: TextStyle(color: Colors.black87),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
                     // Handle Get Data action
                   },
-                  child: Text('Get Data'),
+                  child: const Text('Get Data'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  columns: [
+                  columns: const [
                     DataColumn(label: Text('')),
                     DataColumn(label: Text('Name')),
                     DataColumn(label: Text('STD')),
@@ -1086,15 +1138,15 @@ class _FeeCollectionReportScreenState extends State<FeeCollectionScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 // Handle Export action
               },
-              child: Text('Export'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue, // Button color
               ),
+              child: const Text('Export'),
             ),
           ],
         ),
@@ -1102,44 +1154,558 @@ class _FeeCollectionReportScreenState extends State<FeeCollectionScreen> {
     );
   }
 }
-class ExpenseReportScreen extends StatelessWidget {
+
+class ExpenseReportScreen extends StatefulWidget {
+  const ExpenseReportScreen({super.key});
+
+  @override
+  _ExpenseReportScreenState createState() => _ExpenseReportScreenState();
+}
+
+class _ExpenseReportScreenState extends State<ExpenseReportScreen> {
+  DateTime? fromDate;
+  DateTime? toDate;
+
+  // Method to select a date
+  Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != initialDate) {
+      onDateSelected(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Expense Report Screen'));
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading : false,
+        title: const Text('Expense Report'),
+      ),
+      // Add your drawer here
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context, fromDate, (date) {
+                      setState(() {
+                        fromDate = date;
+                      });
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context, toDate, (date) {
+                      setState(() {
+                        toDate = date;
+                      });
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    // Handle Get Data action
+                  },
+                  child: const Text('Get Data'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('')),
+                    DataColumn(label: Text('Expense Type')),
+                    DataColumn(label: Text('Payment Mode')),
+                    DataColumn(label: Text('Date')),
+                    DataColumn(label: Text('Amount')),
+                  ],
+                  rows: List<DataRow>.generate(
+                    5, // Adjust the number based on your data
+                        (index) => DataRow(
+                      cells: [
+                        DataCell(Text((index + 1).toString())),
+                        DataCell(Text('Expense Type $index')),
+                        DataCell(Text('Payment Mode $index')),
+                        DataCell(Text('Date $index')),
+                        DataCell(Text('Amount $index')),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Handle Export action
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // Button color
+              ),
+              child: const Text('Export'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-class IncomeReportScreen extends StatelessWidget {
+class IncomeReportScreen extends StatefulWidget {
+  const IncomeReportScreen({super.key});
+
+  @override
+  _IncomeReportScreenState createState() => _IncomeReportScreenState();
+}
+
+class _IncomeReportScreenState extends State<IncomeReportScreen> {
+  DateTime? fromDate;
+  DateTime? toDate;
+
+  // Method to select a date
+  Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDateSelected) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != initialDate) {
+      onDateSelected(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Income Report Screen'));
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading : false,
+        title: const Text('Income Report'),
+      ),
+      // Add your drawer here
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context, fromDate, (date) {
+                      setState(() {
+                        fromDate = date;
+                      });
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        fromDate != null ? DateFormat.yMMMd().format(fromDate!) : 'From Date',
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context, toDate, (date) {
+                      setState(() {
+                        toDate = date;
+                      });
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        toDate != null ? DateFormat.yMMMd().format(toDate!) : 'To Date',
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    // Handle Get Data action
+                  },
+                  child: const Text('Get Data'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('')),
+                    DataColumn(label: Text('Income Type')),
+                    DataColumn(label: Text('Payment Mode')),
+                    DataColumn(label: Text('Date')),
+                    DataColumn(label: Text('Amount')),
+                  ],
+                  rows: List<DataRow>.generate(
+                    5, // Adjust the number based on your data
+                        (index) => DataRow(
+                      cells: [
+                        DataCell(Text((index + 1).toString())),
+                        DataCell(Text('Income Type $index')),
+                        DataCell(Text('Payment Mode $index')),
+                        DataCell(Text('Date $index')),
+                        DataCell(Text('Amount $index')),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Handle Export action
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // Button color
+              ),
+              child: const Text('Export'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-class ProfitLossReportScreen extends StatelessWidget {
+class ProfitLossReportScreen extends StatefulWidget {
+  const ProfitLossReportScreen({super.key});
+
+  @override
+  _ProfitLossReportScreenState createState() => _ProfitLossReportScreenState();
+}
+
+class _ProfitLossReportScreenState extends State<ProfitLossReportScreen> {
+  DateTime? _fromDate;
+  DateTime? _toDate;
+
+  Future<void> _selectFromDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _fromDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _fromDate) {
+      setState(() {
+        _fromDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectToDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _toDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _toDate) {
+      setState(() {
+        _toDate = picked;
+      });
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Select Date';
+    return DateFormat('MMMM dd, yyyy').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Profit/Loss Report Screen'));
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: 'Search',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('From Date:'),
+                    const SizedBox(height: 8.0),
+                    GestureDetector(
+                      onTap: () => _selectFromDate(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Text(_formatDate(_fromDate)),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('To Date:'),
+                    const SizedBox(height: 8.0),
+                    GestureDetector(
+                      onTap: () => _selectToDate(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Text(_formatDate(_toDate)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                // Handle Get Data action
+              },
+              child: const Text('Get Data'),
+            ),
+            const SizedBox(height: 32.0),
+            Expanded(
+              child: Column(
+                children: [
+                  // Placeholder for Pie Chart
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'Pie Diagram Placeholder',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendItem(Colors.blue, 'Profit amount - XXXXX'),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendItem(Colors.black, 'Loss amount - XXXXX'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                // Handle Export action
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+              ),
+              child: const Text('Export'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String text) {
+    return Row(
+      children: [
+        Container(
+          width: 12.0,
+          height: 12.0,
+          color: color,
+        ),
+        const SizedBox(width: 8.0),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 2, // Allows wrapping to the next line
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
   }
 }
 
-class StudentInquiryAnalysisReportScreen extends StatelessWidget {
+
+
+class AppAccessRightsScreen extends StatefulWidget {
+  const AppAccessRightsScreen({Key? key}) : super(key: key);
+
   @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Student Inquiry Analysis Report Screen'));
-  }
+  _AppAccessRightsScreenState createState() => _AppAccessRightsScreenState();
 }
 
-class FeeAnalysisReportScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Fee Analysis Report Screen'));
-  }
-}
+class _AppAccessRightsScreenState extends State<AppAccessRightsScreen> {
+  String selectedRights = 'Admin';
+  List<String> users = ['User-1 Name', 'User-2 Name', 'User-3 Name'];
 
-class AppAccessRightsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('App Access Rights Screen'));
+    return Scaffold(
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'App Access Rights',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text('Check App Access Rights'),
+              style: ElevatedButton.styleFrom(foregroundColor: Colors.black, backgroundColor: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            const Text('Check Rights:', style: TextStyle(fontWeight: FontWeight.bold)),
+            RadioListTile(
+              title: const Text('Check Admin Rights'),
+              value: 'Admin',
+              groupValue: selectedRights,
+              onChanged: (value) => setState(() => selectedRights = value.toString()),
+            ),
+            RadioListTile(
+              title: const Text('Check Teacher Rights'),
+              value: 'Teacher',
+              groupValue: selectedRights,
+              onChanged: (value) => setState(() => selectedRights = value.toString()),
+            ),
+            RadioListTile(
+              title: const Text('Check Student Rights'),
+              value: 'Student',
+              groupValue: selectedRights,
+              onChanged: (value) => setState(() => selectedRights = value.toString()),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text('Check Rights'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            ),
+            const SizedBox(height: 16),
+            const Text('Users with Admin Rights:', style: TextStyle(fontWeight: FontWeight.bold)),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: CircleAvatar(child: Text('U${index + 1}')),
+                  title: Text(users[index]),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(icon: Icon(Icons.edit), onPressed: () {}),
+                      IconButton(icon: Icon(Icons.delete), onPressed: () {}),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text('Update'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
