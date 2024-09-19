@@ -1,70 +1,128 @@
-// routes/staffRoutes.js
-
 const express = require('express');
-const router = express.Router();
-const Staff = require('../models/staffModel'); // Adjust path as needed
-const path = require('path');
 const multer = require('multer');
+const Staff = require('../models/staffModel');
 
-// Multer setup for file uploads
+const router = express.Router();
+
+// Setup multer for file uploads
 const storage = multer.diskStorage({
-    destination: './uploads/', // Ensure this directory exists or handle directory creation
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to file name
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // Save files to the 'uploads' directory
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname); // Generate a unique filename
     }
 });
-const upload = multer({ storage });
 
-// Route to upload staff profile picture
-router.post('/uploadProfilePicture', upload.single('profilePicture'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-    }
+const upload = multer({ storage: storage });
+
+// Create staff
+router.post('/', upload.single('profilePicture'), async (req, res) => {
     try {
-        const filePath = req.file.path; // Path to where the file is stored
-        res.status(201).json({ filePath });
+        const staffData = {
+            firstName: req.body.firstName,
+            middleName: req.body.middleName,
+            lastName: req.body.lastName,
+            gender: req.body.gender,
+            mobile: req.body.mobile,
+            email: req.body.email,
+            address: req.body.address,
+            profilePicture: req.file ? req.file.path : null // Save file path if exists
+        };
+
+        const staff = new Staff(staffData);
+        await staff.save();
+
+        res.status(201).json({ message: 'Staff created successfully', staff });
     } catch (error) {
-        console.error('Error uploading profile picture:', error.message);
-        res.status(500).json({ message: 'Failed to upload profile picture' });
+        res.status(500).json({ message: 'Error creating staff', error });
     }
 });
 
-// Route to update staff profile picture
-router.post('/updateStaffProfilePicture/:staffId', upload.single('profilePicture'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-    }
-
+// Update staff
+router.put('/:id', upload.single('profilePicture'), async (req, res) => {
     try {
-        const staffId = req.params.staffId;
-        const filePath = req.file.path; // Path where the file is stored
+        const staffData = {
+            firstName: req.body.firstName,
+            middleName: req.body.middleName,
+            lastName: req.body.lastName,
+            gender: req.body.gender,
+            mobile: req.body.mobile,
+            email: req.body.email,
+            address: req.body.address,
+        };
 
-        const staff = await Staff.findById(staffId);
+        // Check if a profile picture is provided in the update
+        if (req.file) {
+            staffData.profilePicture = req.file.path;
+        }
+
+        const staff = await Staff.findByIdAndUpdate(req.params.id, staffData, { new: true });
+
         if (!staff) {
             return res.status(404).json({ message: 'Staff not found' });
         }
 
-        staff.profilePicture = filePath; // Update staff with new profile picture path
-        await staff.save();
-        res.status(200).json({ message: 'Profile picture updated successfully', filePath });
+        res.status(200).json({ message: 'Staff updated successfully', staff });
     } catch (error) {
-        console.error('Error updating profile picture:', error.message);
-        res.status(500).json({ message: 'Failed to update profile picture' });
+        res.status(500).json({ message: 'Error updating staff', error });
     }
 });
 
-// Route to fetch staff profile picture
-router.get('/profilePicture/:staffId', async (req, res) => {
+// Route to get all staff members
+router.get('/', async (req, res) => {
     try {
-        const staff = await Staff.findById(req.params.staffId);
-        if (!staff || !staff.profilePicture) {
-            return res.status(404).json({ message: 'Profile picture not found' });
-        }
-        res.sendFile(path.resolve(staff.profilePicture));
+        const staffList = await Staff.find(); // Fetches all staff members
+        res.status(200).json(staffList);
     } catch (error) {
-        console.error('Error fetching staff profile picture:', error.message);
-        res.status(500).json({ message: 'Failed to fetch profile picture' });
+        console.error('Error fetching staff:', error.message);
+        res.status(500).json({ message: 'Error fetching staff list' });
     }
+});
+
+// Fetch users with the "Teacher" role
+router.get('/teachers', async (req, res) => {
+  try {
+    const teachers = await User.find({ role: 'Teacher' });
+    res.status(200).json(teachers);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching teachers' });
+  }
+});
+
+// Update teacher attendance
+router.put('/attendance', async (req, res) => {
+  const attendanceData = req.body.attendance;
+
+  try {
+    for (let i = 0; i < attendanceData.length; i++) {
+      await User.findByIdAndUpdate(attendanceData[i]._id, {
+        attendance: attendanceData[i].attendance, // Save attendance in the user document
+      });
+    }
+    res.status(200).json({ message: 'Attendance updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating attendance' });
+  }
+});
+
+// Update user's role based on selected rights
+router.put('/updateRole/:id', async (req, res) => {
+  const userId = req.params.id;
+  const newRole = req.body.role;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.role = newRole;
+    await user.save();
+    res.status(200).json({ message: 'User role updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating user role' });
+  }
 });
 
 module.exports = router;
