@@ -3,6 +3,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:testing_app/screens/config.dart';
+import 'package:http_parser/http_parser.dart';
 
 class StudentScreen extends StatefulWidget {
   final String option;
@@ -63,12 +67,16 @@ class AddStudentInquiryScreen extends StatefulWidget {
   const AddStudentInquiryScreen({super.key});
 
   @override
-  _AddStudentInquiryScreenState createState() => _AddStudentInquiryScreenState();
+  _AddStudentInquiryScreenState createState() =>
+      _AddStudentInquiryScreenState();
 }
 
 class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
   DateTime _selectedDate = DateTime.now();
   String? _fileName;
+  String? _fileType;
+  final _formKey = GlobalKey<FormState>();
+  final Map<String, dynamic> _formData = {};
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -87,13 +95,76 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'], // Allow image formats
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
     );
 
     if (result != null) {
       setState(() {
         _fileName = result.files.single.name;
+        _fileType = result.files.single.extension;
+        _formData['file'] = result.files.single.bytes;
       });
+    }
+  }
+
+  Future<void> _saveInquiry() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
+
+      final uri = Uri.parse('${AppConfig.baseUrl}/api/inquiries');
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['studentName'] = _formData['name'] ?? ''
+        ..fields['gender'] = _formData['gender'] ?? ''
+        ..fields['fatherMobile'] = _formData['fatherMobile'] ?? ''
+        ..fields['motherMobile'] = _formData['motherMobile'] ?? ''
+        ..fields['studentMobile'] = _formData['studentMobile'] ?? ''
+        ..fields['studentEmail'] = _formData['studentEmail'] ?? ''
+        ..fields['schoolCollege'] = _formData['school'] ?? ''
+        ..fields['university'] = _formData['university'] ?? ''
+        ..fields['standard'] = _formData['standard'] ?? ''
+        ..fields['courseType'] = _formData['courseType'] ?? ''
+        ..fields['referenceBy'] = _formData['referenceBy'] ?? ''
+        ..fields['inquirySource'] = _formData['source'] ?? ''
+        ..fields['inquiry'] = _formData['inquiry'] ?? ''
+        ..fields['inquiryDate'] =
+        DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+      if (_formData['file'] != null) {
+        String contentType = 'image/jpeg';
+        if (_fileType == 'png') {
+          contentType = 'image/png';
+        } else if (_fileType == 'gif') {
+          contentType = 'image/gif';
+        }
+
+        request.files.add(http.MultipartFile.fromBytes(
+          'file',
+          _formData['file']!,
+          filename: _fileName,
+          contentType: MediaType.parse(contentType),
+        ));
+      }
+
+      try {
+        final response = await request.send();
+
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Inquiry saved successfully')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                Text('Failed to save inquiry: ${response.reasonPhrase}')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -117,35 +188,36 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
           ),
         ],
       ),
-      // No Drawer or title
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              elevation: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Student Inquiry Registration', // Updated heading
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                elevation: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Student Inquiry Registration',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPersonalDetailsSection(),
-                  ],
+                      const SizedBox(height: 10),
+                      _buildPersonalDetailsSection(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -165,27 +237,28 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
         ),
         Divider(thickness: 1.5, color: Colors.grey[300]),
         const SizedBox(height: 10),
-        _buildTextField('Student Name *'), // Added 'Student Name *' field
-        _buildDropdownField('Gender', ['Male', 'Female', 'Other'], isRequired: true),
-        _buildTextField('Father Mobile'),
-        _buildTextField('Mother Mobile'),
-        _buildTextField('Student Mobile'),
-        _buildTextField('Student Email'),
-        _buildTextField('School / College'),
-        _buildTextField('University'),
-        _buildDropdownField('Standard', ['Class 1', 'Class 2', 'Class 3'], isRequired: true),
-        _buildDropdownField('Course Type', ['Type 1', 'Type 2'], isRequired: true),
-        _buildTextField('Reference By'),
-        _buildFilePicker(), // Profile Picture
-        _buildDatePicker(context), // Inquiry Date
-        _buildTextField('Inquiry Source'),
-        _buildTextArea('Inquiry'),
+        _buildTextField('Student Name *', 'name', isRequired: true),
+        _buildDropdownField('Gender', ['Male', 'Female', 'Other'], 'gender'),
+        _buildTextField('Father Mobile', 'fatherMobile'),
+        _buildTextField('Mother Mobile', 'motherMobile'),
+        _buildTextField('Student Mobile', 'studentMobile', isRequired: true),
+        _buildTextField('Student Email', 'studentEmail', isRequired: true),
+        _buildTextField('School / College', 'school'),
+        _buildTextField('University', 'university'),
+        _buildDropdownField(
+            'Standard', ['Class 1', 'Class 2', 'Class 3'], 'standard'),
+        _buildDropdownField('Course Type', ['Type 1', 'Type 2'], 'courseType'),
+        _buildTextField('Reference By', 'referenceBy'),
+        _buildFilePicker(),
+        _buildDatePicker(context),
+        _buildTextField('Inquiry Source', 'source', isRequired: true),
+        _buildTextArea('Inquiry', 'inquiry', isRequired: true),
         _buildSaveAndResetButtons(),
       ],
     );
   }
 
-  Widget _buildDropdownField(String label, List<String> options, {bool isRequired = false}) {
+  Widget _buildDropdownField(String label, List<String> options, String key) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -193,7 +266,7 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
           Expanded(
             child: DropdownButtonFormField<String>(
               decoration: InputDecoration(
-                labelText: isRequired ? '$label *' : label,
+                labelText: '$label *',
                 border: const OutlineInputBorder(),
               ),
               items: options.map((String option) {
@@ -203,8 +276,13 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
                 );
               }).toList(),
               onChanged: (value) {
-                // Handle change
+                setState(() {
+                  _formData[key] = value;
+                });
               },
+              validator: (value) => value == null || value.isEmpty
+                  ? 'This field is required'
+                  : null,
             ),
           ),
         ],
@@ -212,7 +290,7 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
     );
   }
 
-  Widget _buildTextField(String label, {bool isRequired = false}) {
+  Widget _buildTextField(String label, String key, {bool isRequired = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -220,19 +298,31 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
           labelText: isRequired ? '$label *' : label,
           border: const OutlineInputBorder(),
         ),
+        onSaved: (value) {
+          _formData[key] = value;
+        },
+        validator: (value) => isRequired && (value == null || value.isEmpty)
+            ? 'This field is required'
+            : null,
       ),
     );
   }
 
-  Widget _buildTextArea(String label) {
+  Widget _buildTextArea(String label, String key, {bool isRequired = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         maxLines: 4,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: isRequired ? '$label *' : label,
           border: const OutlineInputBorder(),
         ),
+        onSaved: (value) {
+          _formData[key] = value;
+        },
+        validator: (value) => isRequired && (value == null || value.isEmpty)
+            ? 'This field is required'
+            : null,
       ),
     );
   }
@@ -258,24 +348,12 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => _selectDate(context),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Inquiry Date',
-                  border: OutlineInputBorder(),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(DateFormat('dd-MM-yyyy').format(_selectedDate)),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
-              ),
-            ),
+          ElevatedButton(
+            onPressed: () => _selectDate(context),
+            child: const Text('Select Date'),
           ),
+          const SizedBox(width: 16.0),
+          Text(DateFormat('yyyy-MM-dd').format(_selectedDate)),
         ],
       ),
     );
@@ -285,82 +363,96 @@ class _AddStudentInquiryScreenState extends State<AddStudentInquiryScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           ElevatedButton(
             onPressed: () {
-              // Handle Save action
+              _formKey.currentState?.reset();
+              setState(() {
+                _selectedDate = DateTime.now();
+                _fileName = null;
+                _fileType = null;
+              });
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-            ),
-            child: const Text('Save', style: TextStyle(fontSize: 18)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Reset'),
           ),
+          const SizedBox(width: 16.0),
           ElevatedButton(
-            onPressed: () {
-              // Handle Reset action
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
-            child: const Text('Reset', style: TextStyle(fontSize: 18)),
+            onPressed: _saveInquiry,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Save'),
           ),
         ],
       ),
     );
   }
 }
-class ManageStudentInquiryScreen extends StatefulWidget {
-  const ManageStudentInquiryScreen({super.key});
 
-  @override
-  _ManageStudentInquiryScreenState createState() => _ManageStudentInquiryScreenState();
-}
+class InquiryDetailScreen extends StatelessWidget {
+  final Inquiry inquiry;
 
-class _ManageStudentInquiryScreenState extends State<ManageStudentInquiryScreen> {
-  // Example list of inquiries
-  List<Inquiry> inquiries = [
-    Inquiry(name: 'John Doe', standard: 'Standard 1', date: '01/09/2024', source: 'Website'),
-    // Add more inquiries here
-  ];
+  const InquiryDetailScreen({Key? key, required this.inquiry})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final dateFormat = DateFormat('yyyy-MM-dd'); // Define the date format
+
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Inquiry Details'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {
-                    // Implement search functionality here
-                  },
-                ),
+            Text(
+              'Student Name: ${inquiry.studentName.isNotEmpty ? inquiry.studentName : 'Not Provided'}',
+              style: TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16.0),
-
-            // Student Inquiry List
-            Expanded(
-              child: ListView.builder(
-                itemCount: inquiries.length,
-                itemBuilder: (context, index) {
-                  return StudentInquiryCard(
-                    inquiry: inquiries[index],
-                    onSolvedChanged: (bool? value) {
-                      // Handle mark as solved functionality
-                      setState(() {
-                        inquiries[index].isSolved = value ?? false;
-                      });
-                    },
-                  );
-                },
+            const SizedBox(height: 8.0),
+            Text(
+              'Standard: ${inquiry.standard.isNotEmpty ? inquiry.standard : 'Not Provided'}',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'Inquiry Date: ${inquiry.inquiryDate != null ? dateFormat.format(inquiry.inquiryDate!) : 'Not Provided'}',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'Inquiry Source: ${inquiry.inquirySource.isNotEmpty ? inquiry.inquirySource : 'Not Provided'}',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'Solved: ${inquiry.isSolved ? 'Yes' : 'No'}',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'Inquiry Details: ${inquiry.inquiry ?? 'Not Provided'}',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.black87,
               ),
             ),
           ],
@@ -370,51 +462,280 @@ class _ManageStudentInquiryScreenState extends State<ManageStudentInquiryScreen>
   }
 }
 
-// Model class for Inquiry
-class Inquiry {
-  final String name;
-  final String standard;
-  final String date;
-  final String source;
-  bool isSolved;
+class ManageStudentInquiryScreen extends StatefulWidget {
+  const ManageStudentInquiryScreen({super.key});
 
-  Inquiry({
-    required this.name,
-    required this.standard,
-    required this.date,
-    required this.source,
-    this.isSolved = false,
-  });
+  @override
+  _ManageStudentInquiryScreenState createState() =>
+      _ManageStudentInquiryScreenState();
 }
 
-// Custom widget for each student inquiry
+class _ManageStudentInquiryScreenState
+    extends State<ManageStudentInquiryScreen> {
+  List<Inquiry> _inquiries = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInquiries();
+  }
+
+  Future<void> _fetchInquiries() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/api/inquiries'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _inquiries = data.map((json) => Inquiry.fromJson(json)).toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch inquiries')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> updateInquiry(Inquiry inquiry) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${AppConfig.baseUrl}/api/inquiries/${inquiry.id}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(inquiry.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inquiry updated successfully')),
+        );
+      } else {
+        throw Exception('Failed to update inquiry');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> deleteInquiry(String inquiryId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${AppConfig.baseUrl}/api/inquiries/$inquiryId'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _inquiries.removeWhere((inquiry) => inquiry.id == inquiryId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inquiry deleted successfully')),
+        );
+      } else {
+        throw Exception('Failed to delete inquiry');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  void _confirmDeleteInquiry(String inquiryId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete this inquiry?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              deleteInquiry(inquiryId);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openInquiryDetailScreen(Inquiry inquiry) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => InquiryDetailScreen(inquiry: inquiry),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Manage Student Inquiries'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: _fetchInquiries,
+              child: const Text('Refresh'),
+            ),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _inquiries.isEmpty
+          ? const Center(child: Text('No inquiries available'))
+          : ListView.builder(
+        itemCount: _inquiries.length,
+        itemBuilder: (context, index) {
+          final inquiry = _inquiries[index];
+          return GestureDetector(
+            onTap: () => _openInquiryDetailScreen(inquiry),
+            child: StudentInquiryCard(
+              inquiry: inquiry,
+              onSolvedChanged: (bool? value) {
+                setState(() {
+                  inquiry.isSolved = value ?? false;
+                });
+                updateInquiry(inquiry);
+              },
+              onDelete: () => _confirmDeleteInquiry(inquiry.id),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Model class for Inquiry
+class Inquiry {
+  final String id;
+  final String studentName;
+  final String standard;
+  final DateTime? inquiryDate;
+  final String inquirySource;
+  bool isSolved;
+  final String? inquiry;
+
+  Inquiry({
+    required this.id,
+    required this.studentName,
+    required this.standard,
+    this.inquiryDate,
+    required this.inquirySource,
+    required this.isSolved,
+    this.inquiry,
+  });
+
+  factory Inquiry.fromJson(Map<String, dynamic> json) {
+    return Inquiry(
+      id: json['_id'] ?? '',
+      studentName: json['studentName'] ?? '',
+      standard: json['standard'] ?? '',
+      inquiryDate: json['inquiryDate'] != null
+          ? DateTime.parse(json['inquiryDate'])
+          : null,
+      inquirySource: json['inquirySource'] ?? '',
+      isSolved: json['isSolved'] ?? false,
+      inquiry: json['inquiry'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'studentName': studentName,
+      'standard': standard,
+      'inquiryDate': inquiryDate?.toIso8601String(),
+      'inquirySource': inquirySource,
+      'isSolved': isSolved,
+      'inquiry': inquiry,
+    };
+  }
+}
+
 class StudentInquiryCard extends StatelessWidget {
   final Inquiry inquiry;
   final ValueChanged<bool?> onSolvedChanged;
+  final VoidCallback onDelete;
 
-  const StudentInquiryCard({super.key, 
+  const StudentInquiryCard({
+    super.key,
     required this.inquiry,
     required this.onSolvedChanged,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Student Name: ${inquiry.name}'),
-            Text('Standard: ${inquiry.standard}'),
-            Text('Inquiry Date: ${inquiry.date}'),
-            Text('Inquiry Source: ${inquiry.source}'),
-
-            // Mark as Solved checkbox
-            CheckboxListTile(
-              title: const Text('Mark as Solved'),
-              value: inquiry.isSolved,
-              onChanged: onSolvedChanged,
+            Text(
+              'Student Name: ${inquiry.studentName.isNotEmpty ? inquiry.studentName : 'Not Provided'}',
+              style: textTheme.bodyMedium,
+            ),
+            Text(
+              'Standard: ${inquiry.standard.isNotEmpty ? inquiry.standard : 'Not Provided'}',
+              style: textTheme.bodyMedium,
+            ),
+            Text(
+              'Inquiry Date: ${inquiry.inquiryDate != null ? inquiry.inquiryDate!.toLocal().toString() : 'Not Provided'}',
+              style: textTheme.bodySmall,
+            ),
+            Text(
+              'Inquiry Source: ${inquiry.inquirySource.isNotEmpty ? inquiry.inquirySource : 'Not Provided'}',
+              style: textTheme.bodySmall,
+            ),
+            Row(
+              children: [
+                Checkbox(
+                  value: inquiry.isSolved,
+                  onChanged: onSolvedChanged,
+                ),
+                Expanded(
+                  child: Text(
+                    'Mark as Solved',
+                    style: textTheme.bodySmall,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ],
         ),
@@ -436,7 +757,6 @@ class _ImportStudentsScreenState extends State<ImportStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -468,7 +788,12 @@ class _ImportStudentsScreenState extends State<ImportStudentsScreen> {
             // Standard
             DropdownButtonFormField<String>(
               value: '-- Select --',
-              items: <String>['-- Select --', 'Standard 1', 'Standard 2', 'Standard 3']
+              items: <String>[
+                '-- Select --',
+                'Standard 1',
+                'Standard 2',
+                'Standard 3'
+              ]
                   .map((String value) => DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -487,7 +812,12 @@ class _ImportStudentsScreenState extends State<ImportStudentsScreen> {
             // Course Type
             DropdownButtonFormField<String>(
               value: '-- Select --',
-              items: <String>['-- Select --', 'Course Type 1', 'Course Type 2', 'Course Type 3']
+              items: <String>[
+                '-- Select --',
+                'Course Type 1',
+                'Course Type 2',
+                'Course Type 3'
+              ]
                   .map((String value) => DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -506,7 +836,12 @@ class _ImportStudentsScreenState extends State<ImportStudentsScreen> {
             // Class/Batch
             DropdownButtonFormField<String>(
               value: '-- Select --',
-              items: <String>['-- Select --', 'Class/Batch 1', 'Class/Batch 2', 'Class/Batch 3']
+              items: <String>[
+                '-- Select --',
+                'Class/Batch 1',
+                'Class/Batch 2',
+                'Class/Batch 3'
+              ]
                   .map((String value) => DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -585,12 +920,35 @@ class AddStudentRegistrationScreen extends StatefulWidget {
 }
 
 class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScreen> {
+  final _formKey = GlobalKey<FormState>();
   DateTime _selectedBirthDate = DateTime.now();
   DateTime _selectedJoinDate = DateTime.now();
   bool _printInquiry = false;
   File? _selectedImage;
   String? _fileName = 'No file chosen';
 
+  // Controllers
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _middleNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _fatherNameController = TextEditingController();
+  final TextEditingController _motherNameController = TextEditingController();
+  final TextEditingController _fatherMobileController = TextEditingController();
+  final TextEditingController _motherMobileController = TextEditingController();
+  final TextEditingController _studentMobileController = TextEditingController();
+  final TextEditingController _studentEmailController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _schoolController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
+  final TextEditingController _classBatchController = TextEditingController();
+
+  String? _gender;
+  String? _standard;
+  String? _courseType;
+
+  // Pick birth date or join date
   Future<void> _selectDate(BuildContext context, bool isBirthDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -609,6 +967,7 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
     }
   }
 
+  // Pick image
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -621,11 +980,63 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
     }
   }
 
+  // Save student function
+  Future<void> _saveStudent() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${AppConfig.baseUrl}/api/registrationRoutes'),
+    );
+
+    // Add fields to the request
+    request.fields['name'] =
+    '${_firstNameController.text} ${_middleNameController.text} ${_lastNameController.text}';
+    request.fields['fatherName'] = _fatherNameController.text;
+    request.fields['motherName'] = _motherNameController.text;
+    request.fields['fatherMobile'] = _fatherMobileController.text;
+    request.fields['motherMobile'] = _motherMobileController.text;
+    request.fields['studentMobile'] = _studentMobileController.text;
+    request.fields['studentEmail'] = _studentEmailController.text;
+    request.fields['address'] = _addressController.text;
+    request.fields['state'] = _stateController.text;
+    request.fields['city'] = _cityController.text;
+    request.fields['school'] = _schoolController.text;
+    request.fields['university'] = _universityController.text;
+    request.fields['classBatch'] = _classBatchController.text;
+    request.fields['birthDate'] = _selectedBirthDate.toIso8601String();
+    request.fields['joinDate'] = _selectedJoinDate.toIso8601String();
+    request.fields['gender'] = _gender ?? '';
+    request.fields['standard'] = _standard ?? '';
+    request.fields['courseType'] = _courseType ?? '';
+
+    // Add image file
+    if (_selectedImage != null) {
+      request.files.add(await http.MultipartFile.fromPath('image', _selectedImage!.path));
+    }
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Student registered successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to register student')),
+        );
+        print('Failed to register student: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Exception caught: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // This removes the back arrow
+        automaticallyImplyLeading: false,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -641,34 +1052,36 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
           ),
         ],
       ),
-      // No title and no back arrow
-  body: SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              elevation: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Create Student Registration',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                elevation: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Create Student Registration',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPersonalDetailsSection(),
-                  ],
+                      const SizedBox(height: 10),
+                      _buildPersonalDetailsSection(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -689,25 +1102,45 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
         Divider(thickness: 1.5, color: Colors.grey[300]),
         const SizedBox(height: 10),
         _buildImagePicker('Profile Picture'),
-        _buildTextField('First Name *'),
-        _buildTextField('Middle Name'),
-        _buildTextField('Last Name *'),
-        _buildDropdownField('Gender *', ['Male', 'Female', 'Other']),
+        _buildTextField('First Name *', _firstNameController),
+        _buildTextField('Middle Name', _middleNameController),
+        _buildTextField('Last Name *', _lastNameController),
+        _buildDropdownField('Gender *', ['Male', 'Female', 'Other'], (value) {
+          setState(() {
+            _gender = value;
+          });
+        }),
         _buildDatePickerField('Birth Date *', true),
-        _buildTextField('Father Name'),
-        _buildTextField('Mother Name'),
-        _buildTextField('Father Mobile'),
-        _buildTextField('Mother Mobile'),
-        _buildTextField('Student Mobile'),
-        _buildTextField('Student Email'),
-        _buildTextField('Address'),
-        _buildTextField('State'),
-        _buildTextField('City'),
-        _buildTextField('School/College'),
-        _buildTextField('University'),
-        _buildDropdownField('Standard *', ['-- Select --', '1st', '2nd', '11th', '12th']),
-        _buildDropdownField('Course Type *', ['-- Select --', 'Type1', 'Type2', 'Other']),
-        _buildTextField('Class/Batch'),
+        _buildTextField('Father Name', _fatherNameController),
+        _buildTextField('Mother Name', _motherNameController),
+        _buildTextField('Father Mobile', _fatherMobileController),
+        _buildTextField('Mother Mobile', _motherMobileController),
+        _buildTextField('Student Mobile', _studentMobileController),
+        _buildTextField('Student Email', _studentEmailController),
+        _buildTextField('Address', _addressController),
+        _buildTextField('State', _stateController),
+        _buildTextField('City', _cityController),
+        _buildTextField('School/College', _schoolController),
+        _buildTextField('University', _universityController),
+        _buildDropdownField(
+          'Standard *',
+          ['-- Select --', '1st', '2nd', '11th', '12th'],
+              (value) {
+            setState(() {
+              _standard = value;
+            });
+          },
+        ),
+        _buildDropdownField(
+          'Course Type *',
+          ['-- Select --', 'Type1', 'Type2', 'Other'],
+              (value) {
+            setState(() {
+              _courseType = value;
+            });
+          },
+        ),
+        _buildTextField('Class/Batch', _classBatchController),
         _buildDatePickerField('Join Date', false),
         _buildCheckbox('Do you want to print the submitted student\'s inquiry?'),
         const SizedBox(height: 20),
@@ -715,9 +1148,7 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  // Handle save action
-                },
+                onPressed: _saveStudent,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -732,7 +1163,7 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
                   // Handle reset action
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                  backgroundColor: Colors.grey,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 child: const Text('Reset'),
@@ -744,109 +1175,120 @@ class _AddStudentRegistrationScreenState extends State<AddStudentRegistrationScr
     );
   }
 
-  Widget _buildTextField(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+  // Widget for text field input
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          validator: (value) {
+            if (label.contains('*') && (value == null || value.isEmpty)) {
+              return 'Please enter $label';
+            }
+            return null;
+          },
         ),
-      ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
-  Widget _buildDropdownField(String label, List<String> options) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+  // Widget for dropdown field
+  Widget _buildDropdownField(
+      String label, List<String> items, Function(String?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 5),
+        DropdownButtonFormField<String>(
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: (value) {
+            if (label.contains('*') && (value == null || value == '-- Select --')) {
+              return 'Please select $label';
+            }
+            return null;
+          },
         ),
-        items: options.map((String option) {
-          return DropdownMenuItem<String>(
-            value: option,
-            child: Text(option),
-          );
-        }).toList(),
-        onChanged: (value) {
-          // Handle change
-        },
-      ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
+  // Widget for date picker input
   Widget _buildDatePickerField(String label, bool isBirthDate) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: GestureDetector(
-        onTap: () {
-          _selectDate(context, isBirthDate);
-        },
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${isBirthDate ? _selectedBirthDate.toLocal() : _selectedJoinDate.toLocal()}".split(' ')[0],
-                style: const TextStyle(fontSize: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 5),
+        GestureDetector(
+          onTap: () => _selectDate(context, isBirthDate),
+          child: AbsorbPointer(
+            child: TextFormField(
+              decoration: InputDecoration(
+                hintText: isBirthDate
+                    ? DateFormat('dd/MM/yyyy').format(_selectedBirthDate)
+                    : DateFormat('dd/MM/yyyy').format(_selectedJoinDate),
               ),
-              const Icon(Icons.calendar_today),
-            ],
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
+  // Widget for image picker
   Widget _buildImagePicker(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: _pickImage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text('Choose File'),
-              ),
-              const SizedBox(width: 10),
-              Text(_fileName ?? 'No file chosen', style: const TextStyle(color: Colors.grey)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _selectedImage != null
-              ? Image.file(_selectedImage!, height: 100, width: 100, fit: BoxFit.cover)
-              : Container(),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: const Text('Choose File'),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(_fileName ?? 'No file chosen')),
+          ],
+        ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
+  // Checkbox widget
   Widget _buildCheckbox(String label) {
-    return CheckboxListTile(
-      title: Text(label),
-      value: _printInquiry,
-      onChanged: (bool? value) {
-        setState(() {
-          _printInquiry = value ?? false;
-        });
-      },
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Checkbox(
+          value: _printInquiry,
+          onChanged: (bool? value) {
+            setState(() {
+              _printInquiry = value ?? false;
+            });
+          },
+        ),
+        Text(label),
+      ],
     );
   }
 }
+
 class ManageStudentScreen extends StatefulWidget {
   const ManageStudentScreen({super.key});
 
@@ -855,16 +1297,59 @@ class ManageStudentScreen extends StatefulWidget {
 }
 
 class _ManageStudentScreenState extends State<ManageStudentScreen> {
-  // Example list of students
-  List<Student> students = [
-    Student(name: 'John Doe', standard: 'Standard 1', course: 'Math', classBatch: 'Batch A', joinDate: '01/09/2023'),
-    // Add more students here
-  ];
+  List<Student> students = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStudents();
+  }
+
+  Future<void> _fetchStudents() async {
+    final response = await http.get(Uri.parse('${AppConfig.baseUrl}/api/registration'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      setState(() {
+        students = data.map((json) => Student.fromJson(json)).toList();
+      });
+    } else {
+      // Handle the error
+      print('Failed to load students');
+    }
+  }
+
+  Future<void> _deleteStudent(int id, int index) async {
+    final response = await http.delete(Uri.parse('${AppConfig.baseUrl}/api/registration/$id'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        students.removeAt(index);
+      });
+    } else {
+      // Handle the error
+      print('Failed to delete student');
+    }
+  }
+
+  Future<void> _updateStudent(Student student) async {
+    final response = await http.put(
+      Uri.parse('${AppConfig.baseUrl}/api/registration/${student.id}'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(student.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      _fetchStudents(); // Refresh the list
+    } else {
+      // Handle the error
+      print('Failed to update student');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -892,14 +1377,10 @@ class _ManageStudentScreenState extends State<ManageStudentScreen> {
                   return StudentCard(
                     student: students[index],
                     onEdit: () {
-                      // Implement edit functionality
                       _showEditDialog(context, students[index]);
                     },
                     onDelete: () {
-                      // Implement delete functionality
-                      setState(() {
-                        students.removeAt(index);
-                      });
+                      _confirmDeleteStudent(context, students[index].id, index);
                     },
                   );
                 },
@@ -912,7 +1393,12 @@ class _ManageStudentScreenState extends State<ManageStudentScreen> {
   }
 
   void _showEditDialog(BuildContext context, Student student) {
-    // Show a dialog to edit student information
+    final nameController = TextEditingController(text: student.name);
+    final standardController = TextEditingController(text: student.standard);
+    final courseController = TextEditingController(text: student.course);
+    final batchController = TextEditingController(text: student.classBatch);
+    final joinDateController = TextEditingController(text: student.joinDate);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -922,39 +1408,24 @@ class _ManageStudentScreenState extends State<ManageStudentScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: TextEditingController(text: student.name),
+                controller: nameController,
                 decoration: const InputDecoration(labelText: 'Student Name'),
-                onChanged: (value) {
-                  student.name = value;
-                },
               ),
               TextField(
-                controller: TextEditingController(text: student.standard),
+                controller: standardController,
                 decoration: const InputDecoration(labelText: 'Standard'),
-                onChanged: (value) {
-                  student.standard = value;
-                },
               ),
               TextField(
-                controller: TextEditingController(text: student.course),
+                controller: courseController,
                 decoration: const InputDecoration(labelText: 'Course Name'),
-                onChanged: (value) {
-                  student.course = value;
-                },
               ),
               TextField(
-                controller: TextEditingController(text: student.classBatch),
+                controller: batchController,
                 decoration: const InputDecoration(labelText: 'Class/Batch'),
-                onChanged: (value) {
-                  student.classBatch = value;
-                },
               ),
               TextField(
-                controller: TextEditingController(text: student.joinDate),
+                controller: joinDateController,
                 decoration: const InputDecoration(labelText: 'Join Date'),
-                onChanged: (value) {
-                  student.joinDate = value;
-                },
               ),
             ],
           ),
@@ -967,10 +1438,45 @@ class _ManageStudentScreenState extends State<ManageStudentScreen> {
             ),
             TextButton(
               onPressed: () {
-                setState(() {});
+                final updatedStudent = Student(
+                  id: student.id,
+                  name: nameController.text,
+                  standard: standardController.text,
+                  course: courseController.text,
+                  classBatch: batchController.text,
+                  joinDate: joinDateController.text,
+                );
+                _updateStudent(updatedStudent);
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteStudent(BuildContext context, int id, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this student?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteStudent(id, index);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -981,6 +1487,7 @@ class _ManageStudentScreenState extends State<ManageStudentScreen> {
 
 // Model class for Student
 class Student {
+  int id; // Added id field
   String name;
   String standard;
   String course;
@@ -988,12 +1495,34 @@ class Student {
   String joinDate;
 
   Student({
+    required this.id, // Added id parameter
     required this.name,
     required this.standard,
     required this.course,
     required this.classBatch,
     required this.joinDate,
   });
+
+  factory Student.fromJson(Map<String, dynamic> json) {
+    return Student(
+      id: json['id'],
+      name: json['name'],
+      standard: json['standard'],
+      course: json['course'],
+      classBatch: json['classBatch'],
+      joinDate: json['joinDate'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'standard': standard,
+      'course': course,
+      'classBatch': classBatch,
+      'joinDate': joinDate,
+    };
+  }
 }
 
 // Custom widget for each student
@@ -1002,7 +1531,8 @@ class StudentCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const StudentCard({super.key, 
+  const StudentCard({
+    super.key,
     required this.student,
     required this.onEdit,
     required this.onDelete,
@@ -1016,13 +1546,16 @@ class StudentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Student Name: ${student.name}'),
-            Text('Standard: ${student.standard}'),
-            Text('Course Name: ${student.course}'),
-            Text('Class/Batch: ${student.classBatch}'),
-            Text('Join Date: ${student.joinDate}'),
-
-            // Edit and Delete buttons
+            Text('Name: ${student.name}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('Standard: ${student.standard}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('Course: ${student.course}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('Batch: ${student.classBatch}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('Join Date: ${student.joinDate}',
+                style: Theme.of(context).textTheme.bodyMedium),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -1049,7 +1582,6 @@ class AssignClassBatchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -1124,7 +1656,8 @@ class StudentAttendanceScreen extends StatefulWidget {
   const StudentAttendanceScreen({super.key});
 
   @override
-  _StudentAttendanceScreenState createState() => _StudentAttendanceScreenState();
+  _StudentAttendanceScreenState createState() =>
+      _StudentAttendanceScreenState();
 }
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
@@ -1144,9 +1677,27 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
   // Dummy attendance data (this would come from a backend or database)
   List<Map<String, String>> attendanceData = [
-    {'srNo': '1', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 1', 'attendance': 'Present'},
-    {'srNo': '2', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 2', 'attendance': 'Absent'},
-    {'srNo': '3', 'date': '23/6/2024', 'classBatch': '9th Morning', 'student': 'User - 3', 'attendance': 'Present'},
+    {
+      'srNo': '1',
+      'date': '23/6/2024',
+      'classBatch': '9th Morning',
+      'student': 'User - 1',
+      'attendance': 'Present'
+    },
+    {
+      'srNo': '2',
+      'date': '23/6/2024',
+      'classBatch': '9th Morning',
+      'student': 'User - 2',
+      'attendance': 'Absent'
+    },
+    {
+      'srNo': '3',
+      'date': '23/6/2024',
+      'classBatch': '9th Morning',
+      'student': 'User - 3',
+      'attendance': 'Present'
+    },
   ];
 
   @override
@@ -1154,7 +1705,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: _attendanceTaken ? _buildAttendanceTable() : _buildAttendanceForm(),
+        child:
+        _attendanceTaken ? _buildAttendanceTable() : _buildAttendanceForm(),
       ),
     );
   }
@@ -1164,23 +1716,37 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Take Student Attendance', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Take Student Attendance',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 16.0),
 
         // Attendance Date
         Row(
           children: [
             Flexible(
-              flex: 3, // Adjust the flex ratio to give more space to the month dropdown
+              flex:
+              3, // Adjust the flex ratio to give more space to the month dropdown
               child: DropdownButtonFormField<String>(
                 value: _selectedMonth,
                 items: <String>[
-                  'January', 'February', 'March', 'April', 'May', 'June',
-                  'July', 'August', 'September', 'October', 'November', 'December'
-                ].map((String value) => DropdownMenuItem<String>(
+                  'January',
+                  'February',
+                  'March',
+                  'April',
+                  'May',
+                  'June',
+                  'July',
+                  'August',
+                  'September',
+                  'October',
+                  'November',
+                  'December'
+                ]
+                    .map((String value) => DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
-                )).toList(),
+                ))
+                    .toList(),
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedMonth = newValue!;
@@ -1246,12 +1812,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
         DropdownButtonFormField<String>(
           value: _selectedClassBatch,
           hint: const Text('-- Select --'),
-          items: <String>[
-            'Class/Batch 1', 'Class/Batch 2', 'Class/Batch 3'
-          ].map((String value) => DropdownMenuItem<String>(
+          items: <String>['Class/Batch 1', 'Class/Batch 2', 'Class/Batch 3']
+              .map((String value) => DropdownMenuItem<String>(
             value: value,
             child: Text(value),
-          )).toList(),
+          ))
+              .toList(),
           onChanged: (String? newValue) {
             setState(() {
               _selectedClassBatch = newValue;
@@ -1371,7 +1937,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               label: Text(_isEditable ? 'Stop Edit' : 'Edit'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                padding:
+                const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               ),
             ),
             const SizedBox(width: 20),
@@ -1384,7 +1951,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                padding:
+                const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               ),
               child: const Text(
                 'Update Attendance',
@@ -1398,7 +1966,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   }
 
   // Helper widget to build the date picker
-  Widget _buildDatePicker(String label, {required Function(DateTime) onDateSelected}) {
+  Widget _buildDatePicker(String label,
+      {required Function(DateTime) onDateSelected}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1409,7 +1978,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               child: TextFormField(
                 readOnly: true,
                 decoration: InputDecoration(
-                  labelText: _formatDate(label == 'From Date' ? _fromDate : _toDate),
+                  labelText:
+                  _formatDate(label == 'From Date' ? _fromDate : _toDate),
                   border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
@@ -1436,6 +2006,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return date != null ? DateFormat('dd/MM/yyyy').format(date) : 'Select Date';
   }
 }
+
 class ShareDocumentsScreen extends StatefulWidget {
   const ShareDocumentsScreen({super.key});
 
@@ -1451,20 +2022,25 @@ class _ShareDocumentsScreenState extends State<ShareDocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Selection
-            const Text('Selection', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Selection',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16.0),
 
             // Select Standard to Share Document
             DropdownButtonFormField<String>(
               value: _selectedStandard,
-              items: <String>['-- Select --', 'Standard 1', 'Standard 2', 'Standard 3']
+              items: <String>[
+                '-- Select --',
+                'Standard 1',
+                'Standard 2',
+                'Standard 3'
+              ]
                   .map((String value) => DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -1485,7 +2061,8 @@ class _ShareDocumentsScreenState extends State<ShareDocumentsScreen> {
             // How Would You Like To Share Document
             DropdownButtonFormField<String>(
               value: _selectedShareOption,
-              items: <String>['-- Select --', 'Option 1', 'Option 2', 'Option 3']
+              items:
+              <String>['-- Select --', 'Option 1', 'Option 2', 'Option 3']
                   .map((String value) => DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -1507,10 +2084,12 @@ class _ShareDocumentsScreenState extends State<ShareDocumentsScreen> {
             ElevatedButton(
               onPressed: () {
                 // Implement confirmation logic here
-                if (_selectedStandard == '-- Select --' || _selectedShareOption == '-- Select --') {
+                if (_selectedStandard == '-- Select --' ||
+                    _selectedShareOption == '-- Select --') {
                   // Show error or perform validation
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select all required options')),
+                    const SnackBar(
+                        content: Text('Please select all required options')),
                   );
                 } else {
                   // Proceed with confirmation logic
@@ -1532,10 +2111,12 @@ class ManageSharedDocumentsScreen extends StatefulWidget {
   const ManageSharedDocumentsScreen({super.key});
 
   @override
-  _ManageSharedDocumentsScreenState createState() => _ManageSharedDocumentsScreenState();
+  _ManageSharedDocumentsScreenState createState() =>
+      _ManageSharedDocumentsScreenState();
 }
 
-class _ManageSharedDocumentsScreenState extends State<ManageSharedDocumentsScreen> {
+class _ManageSharedDocumentsScreenState
+    extends State<ManageSharedDocumentsScreen> {
   // Dummy data for the shared documents list
   final List<Map<String, String>> _sharedDocuments = [
     {'standard': 'Standard 1', 'document': 'Document1.pdf'},
@@ -1550,7 +2131,8 @@ class _ManageSharedDocumentsScreenState extends State<ManageSharedDocumentsScree
       builder: (context) {
         return AlertDialog(
           title: const Text('Edit Document'),
-          content: Text('Editing document: ${_sharedDocuments[index]['document']}'),
+          content:
+          Text('Editing document: ${_sharedDocuments[index]['document']}'),
           actions: [
             TextButton(
               onPressed: () {
@@ -1588,7 +2170,8 @@ class _ManageSharedDocumentsScreenState extends State<ManageSharedDocumentsScree
       builder: (context) {
         return AlertDialog(
           title: const Text('View Document'),
-          content: Text('Viewing document: ${_sharedDocuments[index]['document']}'),
+          content:
+          Text('Viewing document: ${_sharedDocuments[index]['document']}'),
           actions: [
             TextButton(
               onPressed: () {
@@ -1712,7 +2295,8 @@ class ChatWithStudentsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Add New Chat
-            const Text('Add New Chat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text('Add New Chat',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 16.0),
 
             // Subject/Topic
@@ -1720,7 +2304,8 @@ class ChatWithStudentsScreen extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Subject/Topic*',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               ),
             ),
             const SizedBox(height: 16.0),
@@ -1740,7 +2325,8 @@ class ChatWithStudentsScreen extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Student Name*',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               ),
             ),
             const SizedBox(height: 16.0),
@@ -1751,7 +2337,8 @@ class ChatWithStudentsScreen extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Message*',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               ),
             ),
             const SizedBox(height: 32.0),
@@ -1786,7 +2373,8 @@ class ChatWithStudentsScreen extends StatelessWidget {
                         backgroundColor: Colors.grey, // Custom background color
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                       ),
-                      child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                      child:
+                      const Text('Cancel', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                 ),
@@ -1798,7 +2386,6 @@ class ChatWithStudentsScreen extends StatelessWidget {
     );
   }
 }
-
 
 class StudentsFeedbackScreen extends StatelessWidget {
   const StudentsFeedbackScreen({super.key});
@@ -1826,7 +2413,8 @@ class StudentsFeedbackScreen extends StatelessWidget {
                   },
                 ),
                 border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
               ),
             ),
             const SizedBox(height: 16.0),
@@ -1858,7 +2446,8 @@ class StudentFeedbackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0), // Adds vertical spacing between cards
+      margin: const EdgeInsets.symmetric(
+          vertical: 8.0), // Adds vertical spacing between cards
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -1946,14 +2535,16 @@ class _StudentRightsScreenState extends State<StudentRightsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Assign Student Rights
-            const Text('Assign Student Rights', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Assign Student Rights',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16.0),
 
             // My Activity
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('My Activity', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('My Activity',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
@@ -1981,7 +2572,8 @@ class _StudentRightsScreenState extends State<StudentRightsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Reports', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Reports',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
@@ -2063,6 +2655,3 @@ class _StudentRightsScreenState extends State<StudentRightsScreen> {
     print('Reports: $_reportChecks');
   }
 }
-
-
-
